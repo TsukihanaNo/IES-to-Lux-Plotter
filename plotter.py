@@ -165,13 +165,14 @@ for x_values in y_axis_list:
         x_counter=0
         for candela in x_values:
             x_angle = -90 + x_counter*interval+x_tilt
+            if x_angle<90 and x_angle>-90:
             #print(y_angle, x_angle, candela)
-            x = math.tan(y_angle * math.pi / 180) * height
-            z = math.tan(x_angle * math.pi / 180) * x
-            d = math.sqrt(height**2+x**2+z**2)
-            lux = (float(candela)*candela_to_lux_modifier)/(d**2)
-            #print(z,y,lux)
-            projection_list.append((z,-x,lux))
+                x = math.tan(y_angle * math.pi / 180) * height
+                z = math.tan(x_angle * math.pi / 180) * x
+                d = math.sqrt(height**2+x**2+z**2)
+                lux = (float(candela)*candela_to_lux_modifier)/(d**2)
+                #print(z,y,lux)
+                projection_list.append((z,-x,lux))
             x_counter+=1
     y_counter+=1
     
@@ -378,7 +379,7 @@ class RenderWallProjection(QtWidgets.QWidget):
         painter.drawText(QtCore.QPointF(5, 25),"Y Distance (ft.)")
         
         #draw title
-        painter.drawText(QtCore.QPointF(self.width/2-self.offsetx-25, 10),f"wall Plot at {wall_distance} from ground, tilted at {y_tilt} degs")
+        painter.drawText(QtCore.QPointF(self.width/2-self.offsetx-25, 10),f"wall Plot at {wall_distance} ft. from source, tilted at {y_tilt} degs")
         
         painter.end()
         
@@ -461,7 +462,7 @@ class RenderGroundProjection(QtWidgets.QWidget):
         painter.drawText(QtCore.QPointF(5, 25),"Y Distance (ft.)")
         
         #draw title
-        painter.drawText(QtCore.QPointF(self.width/2-self.offsetx-25, 10),f"Ground Plot at {height} from ground, tilted at {y_tilt} degs")
+        painter.drawText(QtCore.QPointF(self.width/2-self.offsetx-25, 10),f"Ground Plot at {height} ft. from ground, tilted at {y_tilt} degs")
         painter.end()
         
         
