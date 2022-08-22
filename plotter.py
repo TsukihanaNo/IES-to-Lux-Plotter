@@ -17,7 +17,7 @@ x_lux_list = []
 increments = 1
 max_distance = 300 #max x distance
 interval = 2 #x distance increment
-candela_to_lux_modifier = 10.76391 #for feet only, not required for meters
+candela_to_lux_modifier = 10.76391 #10.76391for feet only, not required for meters
 tilt_adjust = 0
 
 x_range = int(max_distance/increments)
@@ -130,7 +130,7 @@ angular_element = angular_element-1
 #     x_lux_list.append(y_lux_list)
 
 #wall projection calculation
-# wall_distance = 10
+# wall_distance = 50
 # interval = 2
 # y_counter = 0
 # x_tilt = 0
@@ -152,29 +152,32 @@ angular_element = angular_element-1
 #     y_counter+=1
 
 #ground projection calculations
-height =12
-y_tilt = -30
-x_tilt = 0
+height = 30
+y_tilt =-30
+x_tilt = -30
 y_counter = 0
 projection_list = []
 y_angle_limit = math.degrees(math.atan(height/max_distance))
 print(y_angle_limit)
 for x_values in y_axis_list:
     y_angle = -90 + y_counter*interval+y_tilt
-    if y_angle<-y_angle_limit and y_angle>=-90:
+    if y_angle<=-y_angle_limit and y_angle>-90:
         x_counter=0
         for candela in x_values:
             x_angle = -90 + x_counter*interval+x_tilt
             if x_angle<90 and x_angle>-90:
             #print(y_angle, x_angle, candela)
-                x = math.tan(y_angle * math.pi / 180) * height
-                z = math.tan(x_angle * math.pi / 180) * x
+                x = math.tan(((90+y_angle) * math.pi) / 180) * height
+                z = math.tan((x_angle * math.pi) / 180) * x
                 d = math.sqrt(height**2+x**2+z**2)
                 lux = (float(candela)*candela_to_lux_modifier)/(d**2)
-                #print(z,y,lux)
-                projection_list.append((z,-x,lux))
+                #print(y_angle,x_angle,candela,d,z,x,lux)
+                projection_list.append((z,x,lux))
             x_counter+=1
     y_counter+=1
+    
+# for item in projection_list:
+#     print(item)
     
 
 
@@ -186,8 +189,8 @@ class LuxPlotter(QtWidgets.QWidget):
         self.width=900
         layout = QtWidgets.QVBoxLayout()
         #renderer = RenderPlane(self)
-        renderer = RenderGroundProjection(self)
         #renderer = RenderWallProjection(self)
+        renderer = RenderGroundProjection(self)
         layout.addWidget(renderer)
         self.setLayout(layout)
         self.setGeometry(0, 0, self.width, self.height)
@@ -242,7 +245,7 @@ class RenderPlane(QtWidgets.QWidget):
                     if lux_item[1]>0 and lux_item[1] < 25:
                         pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[1]/25)*255),0),pixel_size)
                     elif lux_item[1] >25 and lux_item[1] < 50:
-                        pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[1]/50)*255)),pixel_size)
+                        pen = QtGui.QPen(QtGui.QColor(0,0,int(((5+lux_item[1]-20)/50)*255)),pixel_size)
                     elif lux_item[1] >50 and lux_item[1] < 250:
                         pen = QtGui.QPen(QtCore.Qt.yellow,pixel_size)
                     elif lux_item[1] >250 and lux_item[1] < 1000:
