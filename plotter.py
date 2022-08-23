@@ -59,28 +59,28 @@ angular_element = angular_element-1
 #     x_lux_list.append(y_lux_list)
 
 #calculate lux at y for x distance for all vertical degrees (-88 to 88) by flattening of values to 1 plane (averaged)
-# y_counter = 0
-# x_lux_list = []
-# for x in range(x_range):
-#     x= x+1
-#     x = x * increments
-#     y_lux_list = []
-#     for y_counter in range(len(y_axis_list)):
-#         angle = -90+y_counter*interval+tilt_adjust
-#         if angle >-90 and angle<90:
-#             #candela = y_axis_list[y_counter][angular_element]
-#             candela = 0
-#             for candela_element in y_axis_list[y_counter]:
-#                 candela = candela + int(candela_element)
-#             candela = candela/90
-#             y = math.tan(angle * math.pi / 180) * x
-#             d = math.sqrt(x**2+y**2)
-#             if angle==0:
-#                 lux = (float(candela)*candela_to_lux_modifier)/(x**2)
-#             else:
-#                 lux = (float(candela)*candela_to_lux_modifier)/(d**2)
-#             y_lux_list.append((y,lux))
-#     x_lux_list.append(y_lux_list)
+y_counter = 0
+x_lux_list = []
+for x in range(x_range):
+    x= x+1
+    x = x * increments
+    y_lux_list = []
+    for y_counter in range(len(y_axis_list)):
+        angle = -90+y_counter*interval+tilt_adjust
+        if angle >-90 and angle<90:
+            #candela = y_axis_list[y_counter][angular_element]
+            candela = 0
+            for candela_element in y_axis_list[y_counter]:
+                candela = candela + int(candela_element)
+            candela = candela/90
+            y = math.tan(angle * math.pi / 180) * x
+            d = math.sqrt(x**2+y**2)
+            if angle==0:
+                lux = (float(candela)*candela_to_lux_modifier)/(x**2)
+            else:
+                lux = (float(candela)*candela_to_lux_modifier)/(d**2)
+            y_lux_list.append((y,lux))
+    x_lux_list.append(y_lux_list)
 
 #calculate lux at y for x distance for all horizontal degrees (-88 to 88) by angular slice
 # y_counter = 0
@@ -130,7 +130,7 @@ angular_element = angular_element-1
 #     x_lux_list.append(y_lux_list)
 
 #wall projection calculation
-# wall_distance = 50
+# wall_distance = 30
 # interval = 2
 # y_counter = 0
 # x_tilt = 0
@@ -152,33 +152,88 @@ angular_element = angular_element-1
 #     y_counter+=1
 
 #ground projection calculations
-height = 30
-y_tilt =-30
-x_tilt = -30
-y_counter = 0
-projection_list = []
-y_angle_limit = math.degrees(math.atan(height/max_distance))
-print(y_angle_limit)
-for x_values in y_axis_list:
-    y_angle = -90 + y_counter*interval+y_tilt
-    if y_angle<=-y_angle_limit and y_angle>-90:
-        x_counter=0
-        for candela in x_values:
-            x_angle = -90 + x_counter*interval+x_tilt
-            if x_angle<90 and x_angle>-90:
-            #print(y_angle, x_angle, candela)
-                x = math.tan(((90+y_angle) * math.pi) / 180) * height
-                z = math.tan((x_angle * math.pi) / 180) * x
-                d = math.sqrt(height**2+x**2+z**2)
-                lux = (float(candela)*candela_to_lux_modifier)/(d**2)
-                #print(y_angle,x_angle,candela,d,z,x,lux)
-                projection_list.append((z,x,lux))
-            x_counter+=1
-    y_counter+=1
+# height = 8
+# y_tilt =-0
+# x_tilt = 0
+# y_counter = 0
+# projection_list = []
+# y_angle_limit = math.degrees(math.atan(height/max_distance))
+# print(y_angle_limit)
+# for x_values in y_axis_list:
+#     y_angle = -90 + y_counter*interval+y_tilt
+#     if y_angle<=-y_angle_limit and y_angle>-90:
+#         x_counter=0
+#         for candela in x_values:
+#             x_angle = -90 + x_counter*interval+x_tilt
+#             if x_angle<90 and x_angle>-90:
+#             #print(y_angle, x_angle, candela)
+#                 x = math.tan(((90+y_angle) * math.pi) / 180) * height
+#                 z = math.tan((x_angle * math.pi) / 180) * x
+#                 d = math.sqrt(height**2+x**2+z**2)
+#                 lux = (float(candela)*candela_to_lux_modifier)/(d**2)
+#                 #print(y_angle,x_angle,candela,d,z,x,lux)
+#                 projection_list.append((z,x,lux))
+#             x_counter+=1
+#     y_counter+=1
     
-# for item in projection_list:
-#     print(item)
-    
+#reverse ground project calculations
+# height = 1
+# y_tilt = 0
+# x_tilt = 0
+
+# increments = 2
+# x_distance = 300
+# x_range = int(x_distance/increments)
+# z_distance = 150
+# z_range = int(z_distance/increments)*2
+
+# angle_increment = 2
+# element_count = len(y_axis_list)
+# projection_list = []
+
+# for x in range(1,x_range-1):
+#     x=x*increments
+#     for z in range(z_range):
+#         z=-z_distance+z*increments
+#         #print(x,z)
+#         theta_x = math.degrees(math.atan(z/x))-x_tilt
+#         theta_y = math.degrees(math.atan(x/height))-90-y_tilt
+#         #print(theta_x,theta_y)
+#         #find x element
+#         x_th = 0
+#         y_th = 0
+#         for xth in range(element_count):
+#             angle = -90 + xth*2
+#             #print(angle)
+#             if theta_x < 0:
+#                 if theta_x < angle and angle<=0:
+#                     x_th = xth
+#                     #print("x - negative",angle,theta_x, -90+x_th*2)
+#                     break
+#             else:
+#                 if theta_x < angle and angle>=0:
+#                     x_th = xth
+#                     #print("x - positive",angle,theta_x,-90+x_th*2)
+#                     break
+#             for yth in range(element_count):
+#                 angle = -90 + yth*2
+#                 #print(angle)
+#                 if theta_y < 0:
+#                     if theta_y < angle and angle<=0:
+#                         y_th = yth
+#                         #print("y - negative",angle,theta_y, -90+y_th*2)
+#                         break
+#                 else:
+#                     if theta_y < angle and angle>=0:
+#                         y_th = yth
+#                         #print("y - positive",angle,theta_y,-90+y_th*2)
+#                         break
+#         candela = y_axis_list[y_th][x_th]
+#         d = math.sqrt((height**2)+(x**2)+(z**2))
+#         lux = (float(candela)*candela_to_lux_modifier)/(d**2)
+#         # if z ==0:
+#         #     print("calculated theta:",theta_x,theta_y,"list theta",-90+x_th*2,-90+y_th*2,"z,x",z,x,"candela",candela,d,lux)
+#         projection_list.append((z,x,lux))
 
 
 class LuxPlotter(QtWidgets.QWidget):
@@ -188,9 +243,9 @@ class LuxPlotter(QtWidgets.QWidget):
         self.height=900
         self.width=900
         layout = QtWidgets.QVBoxLayout()
-        #renderer = RenderPlane(self)
+        renderer = RenderPlane(self)
         #renderer = RenderWallProjection(self)
-        renderer = RenderGroundProjection(self)
+        #renderer = RenderGroundProjection(self)
         layout.addWidget(renderer)
         self.setLayout(layout)
         self.setGeometry(0, 0, self.width, self.height)
@@ -243,13 +298,15 @@ class RenderPlane(QtWidgets.QWidget):
                 y = lux_item[0]
                 if y < self.yrange and y > -self.yrange :
                     if lux_item[1]>0 and lux_item[1] < 25:
-                        pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[1]/25)*255),0),pixel_size)
+                        pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[1]/25)*255)),pixel_size)
                     elif lux_item[1] >25 and lux_item[1] < 50:
-                        pen = QtGui.QPen(QtGui.QColor(0,0,int(((5+lux_item[1]-20)/50)*255)),pixel_size)
-                    elif lux_item[1] >50 and lux_item[1] < 250:
-                        pen = QtGui.QPen(QtCore.Qt.yellow,pixel_size)
+                        pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[1]/50)*255),0),pixel_size)
+                    elif lux_item[1] >50 and lux_item[1] < 100:
+                        pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[1])/50)*10),0),pixel_size)
+                    elif lux_item[1] >100 and lux_item[1] < 250:
+                        pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[1])/250)*165),0),pixel_size)
                     elif lux_item[1] >250 and lux_item[1] < 1000:
-                        pen = QtGui.QPen(QtCore.Qt.red,pixel_size)
+                        pen = QtGui.QPen(QtGui.QColor(255,80-int(((lux_item[1])/1000)*80),0),pixel_size)
                     else:
                         pen = QtGui.QPen(QtCore.Qt.white,pixel_size)
                     painter.setPen(pen)
@@ -329,13 +386,15 @@ class RenderWallProjection(QtWidgets.QWidget):
             #lux = lux_item[2]
             if y < self.yrange and y > -self.yrange and x<self.xrange and x>-self.xrange:
                 if lux_item[2]>0 and lux_item[2] < 25:
-                    pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[2]/25)*255),0),pixel_size)
+                    pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[2]/25)*255)),pixel_size)
                 elif lux_item[2] >25 and lux_item[2] < 50:
-                    pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[2]/50)*255)),pixel_size)
-                elif lux_item[2] >50 and lux_item[2] < 250:
-                    pen = QtGui.QPen(QtCore.Qt.yellow,pixel_size)
+                    pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[2]/50)*255),0),pixel_size)
+                elif lux_item[2] >50 and lux_item[2] < 100:
+                    pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/50)*10),0),pixel_size)
+                elif lux_item[2] >100 and lux_item[2] < 250:
+                    pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/250)*165),0),pixel_size)
                 elif lux_item[2] >250 and lux_item[2] < 1000:
-                    pen = QtGui.QPen(QtCore.Qt.red,pixel_size)
+                    pen = QtGui.QPen(QtGui.QColor(255,80-int(((lux_item[2])/1000)*80),0),pixel_size)
                 else:
                     pen = QtGui.QPen(QtCore.Qt.white,pixel_size)
                 painter.setPen(pen)
@@ -418,13 +477,15 @@ class RenderGroundProjection(QtWidgets.QWidget):
             #lux = lux_item[2]
             if y < self.yrange and y > -self.yrange and x<self.xrange and x>-self.xrange:
                 if lux_item[2]>0 and lux_item[2] < 25:
-                    pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[2]/25)*255),0),pixel_size)
+                    pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[2]/25)*255)),pixel_size)
                 elif lux_item[2] >25 and lux_item[2] < 50:
-                    pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[2]/50)*255)),pixel_size)
-                elif lux_item[2] >50 and lux_item[2] < 250:
-                    pen = QtGui.QPen(QtCore.Qt.yellow,pixel_size)
+                    pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[2]/50)*255),0),pixel_size)
+                elif lux_item[2] >50 and lux_item[2] < 100:
+                    pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/50)*10),0),pixel_size)
+                elif lux_item[2] >100 and lux_item[2] < 250:
+                    pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/250)*165),0),pixel_size)
                 elif lux_item[2] >250 and lux_item[2] < 1000:
-                    pen = QtGui.QPen(QtCore.Qt.red,pixel_size)
+                    pen = QtGui.QPen(QtGui.QColor(255,80-int(((lux_item[2])/1000)*80),0),pixel_size)
                 else:
                     pen = QtGui.QPen(QtCore.Qt.white,pixel_size)
                 painter.setPen(pen)
