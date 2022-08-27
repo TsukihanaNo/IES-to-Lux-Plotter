@@ -13,6 +13,17 @@ with open(f_path) as f:
         
 x_lux_list = []
 
+
+temp_list_2 = []
+#rotate grid
+for i in range(len(y_axis_list[0])):
+    temp_list = []
+    for j in range(len(y_axis_list)):
+        temp_list.append(y_axis_list[j][i])
+    temp_list_2.append(temp_list)
+    
+y_axis_list = temp_list_2
+
 #settings
 increments = 1
 max_distance = 300 #max x distance
@@ -147,7 +158,7 @@ angular_element = angular_element-1
 #         d = math.sqrt(wall_distance**2+y**2+z**2)
 #         lux = (float(candela)*candela_to_lux_modifier)/(d**2)
 #         #print(z,y,lux)
-#         projection_list.append((y,z,lux))
+#         projection_list.append((z,y,lux))
 #         x_counter+=1
 #     y_counter+=1
 
@@ -195,44 +206,23 @@ for x in range(1,x_range+1):
     x=x*increments
     for z in range(z_range):
         z=-z_distance+z*increments
-        #print(x,z)
         theta_x = math.degrees(math.atan(z/x))-x_tilt
-        
-        #theoretical angles
         theta_y = -90+math.degrees(math.atan(x/height))-y_tilt
-        
-        #seems more accurate
-        # theta_y = math.degrees(math.atan(1-x/height))-y_tilt
-        # if theta_y<0:
-        #     theta_y = - 90 - theta_y
-        # else:
-        #     theta_y = - 90 + theta_y
-            
-        # theta_y = math.degrees(math.atan(2-x/height))+y_tilt
-        # if theta_y<0:
-        #     theta_y = - 90 - theta_y
-        # else:
-        #     theta_y = - 90 + theta_y
-        
-        #these 2 are the same
-        #theta_y = -90-math.degrees(math.atan(1-x/height))-y_tilt
-        #theta_y = 90+math.degrees(math.atan(1-x/height))-y_tilt
-        
-        #print(theta_x,theta_y)
-        #find x element
-        x_th = 0
-        y_th = 0
+        x_th_1, x_th_2 = 0, 0
+        y_th_1, y_th_2 = 0, 0
         for xth in range(element_count):
             angle = -90 + xth*2
             #print(angle)
             if theta_x < 0:
                 if theta_x < angle and angle<=0:
-                    x_th = xth
+                    x_th_1 = xth
+                    x_th_2 = xth-1
                     #print("x - negative",angle,theta_x, -90+x_th*2)
                     break
             else:
                 if theta_x <= angle and angle>=0:
-                    x_th = xth
+                    x_th_1 = xth
+                    x_th_2 = xth-1
                     #print("x - positive",angle,theta_x,-90+x_th*2)
                     break
             for yth in range(element_count):
@@ -240,19 +230,45 @@ for x in range(1,x_range+1):
                 #print(angle)
                 if theta_y < 0:
                     if theta_y < angle and angle<=0:
-                        y_th = yth
+                        y_th_1 = yth
+                        y_th_2 = yth-1
                         #print("y - negative",angle,theta_y, -90+y_th*2)
                         break
                 else:
                     if theta_y < angle and angle>=0:
-                        y_th = yth
+                        y_th_1 = yth
+                        y_th_2 = yth-1
                         #print("y - positive",angle,theta_y,-90+y_th*2)
                         break
-        candela = y_axis_list[y_th][x_th]
+        
+        #averaged linear interpolation
+        #interpolating by x axis
+        degree_increment = 2
+        interpolation_level = 20
+        interpolation_steps = degree_increment * interpolation_level
+        c_x_increment_1 = int(y_axis_list[y_th_1][x_th_2])-int(y_axis_list[y_th_1][x_th_1])
+        c_x_increment_2 = int(y_axis_list[y_th_2][x_th_2])-int(y_axis_list[y_th_2][x_th_1])
+        c_x_increment_1 = c_x_increment_1 / interpolation_steps
+        c_x_increment_2 = c_x_increment_2 / interpolation_steps
+        
+        x_dif = theta_x-(-90+x_th_1*2)
+        c_x_1 = int(y_axis_list[y_th_1][x_th_2]) + (x_dif * interpolation_level * c_x_increment_1)
+        c_x_2 = int(y_axis_list[y_th_2][x_th_2]) + (x_dif * interpolation_level * c_x_increment_2)
+        
+        c_y_increment = c_x_2 - c_x_1
+        c_y_increment = c_y_increment / interpolation_steps
+        
+        y_dif = theta_y - (-90+y_th_1*2) 
+        c_y = c_x_1 - (c_y_increment * interpolation_level * y_dif)
+        candela = c_y
+        #print(theta_x, theta_y,(-90+x_th_1*2), (-90+x_th_2*2),(-90+y_th_1*2), (-90+y_th_2*2),"dif data",x_dif, c_x_increment_1,c_x_increment_2,"x candela", c_x_1, c_x_2,"final candela",c_y,"set 1", y_axis_list[y_th_1][x_th_1], y_axis_list[y_th_1][x_th_2],"set 2", y_axis_list[y_th_2][x_th_1], y_axis_list[y_th_2][x_th_2])
+        
+        # candela = y_axis_list[y_th_1][x_th_1]
         d = math.sqrt((height**2)+(x**2)+(z**2))
         lux = (float(candela)*candela_to_lux_modifier)/(d**2)
         if z ==0 and x%25==0:
-            print("calculated theta:",theta_x,theta_y,"list theta",-90+x_th*2,-90+y_th*2,"z,x",z,x,"candela",candela,d,lux)
+            print("calculated theta:",theta_x,theta_y,"list theta",-90+x_th_1*2,-90+y_th_1*2,"z,x",z,x,"interpolated candela",candela,c_x_1, c_x_2,"distance",d,"lux",lux,"original candelas",-90+x_th_1*2,-90+y_th_1*2, y_axis_list[y_th_1][x_th_1],-90+x_th_2*2,-90+y_th_1*2,y_axis_list[y_th_1][x_th_2],-90+x_th_1*2,-90+y_th_2*2,y_axis_list[y_th_2][x_th_1],-90+x_th_2*2,-90+y_th_2*2,y_axis_list[y_th_2][x_th_2])
+        #print("calculated theta:",theta_x,theta_y,"list theta x",-90+x_th_1*2,-90+x_th_2*2,"list theta y",-90+y_th_1*2,-90+y_th_2*2,"z,x",z,x,"candela",candela,d,lux)
         projection_list.append((z,x,lux))
 
 
@@ -489,23 +505,23 @@ class RenderGroundProjection(QtWidgets.QWidget):
         painter.scale(self.scale, self.scale)
         
         #draw points
-        pixel_size = 4
+        pixel_size = 2
         for lux_item in projection_list:
             # x = x * increments
             x = lux_item[0]
             y = lux_item[1]
             #lux = lux_item[2]
             if y < self.yrange and y > -self.yrange and x<self.xrange and x>-self.xrange:
-                if lux_item[2]>0.4 and lux_item[2] < 25:
-                    pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[2]/25)*255)),pixel_size)
+                if lux_item[2]>0 and lux_item[2] < 10:
+                    pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[2]/10)*255)),pixel_size)
+                elif lux_item[2] >10 and lux_item[2] < 25:
+                    pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[2]/25)*255),0),pixel_size)
                 elif lux_item[2] >25 and lux_item[2] < 50:
-                    pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[2]/50)*255),0),pixel_size)
-                elif lux_item[2] >50 and lux_item[2] < 100:
                     pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/50)*10),0),pixel_size)
-                elif lux_item[2] >100 and lux_item[2] < 250:
-                    pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/250)*165),0),pixel_size)
-                elif lux_item[2] >250 and lux_item[2] < 1000:
-                    pen = QtGui.QPen(QtGui.QColor(255,80-int(((lux_item[2])/1000)*80),0),pixel_size)
+                elif lux_item[2] >50 and lux_item[2] < 100:
+                    pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/100)*165),0),pixel_size)
+                elif lux_item[2] >100 and lux_item[2] < 150:
+                    pen = QtGui.QPen(QtGui.QColor(255,80-int(((lux_item[2])/150)*80),0),pixel_size)
                 else:
                     pen = QtGui.QPen(QtCore.Qt.white,pixel_size)
                 painter.setPen(pen)
