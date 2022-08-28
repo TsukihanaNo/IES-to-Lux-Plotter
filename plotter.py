@@ -213,6 +213,10 @@ for x in range(1,x_range+1):
         for xth in range(element_count):
             angle = -90 + xth*2
             #print(angle)
+            if theta_x==angle:
+                x_th_1 = xth
+                x_th_2 = xth
+                break
             if theta_x < 0:
                 if theta_x < angle and angle<=0:
                     x_th_1 = xth
@@ -228,6 +232,10 @@ for x in range(1,x_range+1):
             for yth in range(element_count):
                 angle = -90 + yth*2
                 #print(angle)
+                if theta_y==angle:
+                    y_th_1 = yth
+                    y_th_2 = yth
+                    break
                 if theta_y < 0:
                     if theta_y < angle and angle<=0:
                         y_th_1 = yth
