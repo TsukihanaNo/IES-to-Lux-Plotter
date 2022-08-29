@@ -2,7 +2,7 @@ import os, sys
 import math
 from PySide6 import QtCore, QtGui, QtWidgets
 
-f_path = "raw_values.csv"
+f_path = "spot_values.csv"
 
 y_axis_list = []
 
@@ -14,15 +14,15 @@ with open(f_path) as f:
 x_lux_list = []
 
 
-temp_list_2 = []
-#rotate grid
-for i in range(len(y_axis_list[0])):
-    temp_list = []
-    for j in range(len(y_axis_list)):
-        temp_list.append(y_axis_list[j][i])
-    temp_list_2.append(temp_list)
+# temp_list_2 = []
+# #rotate grid
+# for i in range(len(y_axis_list[0])):
+#     temp_list = []
+#     for j in range(len(y_axis_list)):
+#         temp_list.append(y_axis_list[j][i])
+#     temp_list_2.append(temp_list)
     
-y_axis_list = temp_list_2
+# y_axis_list = temp_list_2
 
 #settings
 increments = 1
@@ -167,16 +167,17 @@ angular_element = angular_element-1
 # y_tilt =-0
 # x_tilt = 0
 # y_counter = 0
+# interval = 1
 # projection_list = []
 # y_angle_limit = math.degrees(math.atan(height/max_distance))
 # print(y_angle_limit)
 # for x_values in y_axis_list:
-#     y_angle = -90 + y_counter*interval+y_tilt
-#     if y_angle<=-y_angle_limit and y_angle>-90:
+#     y_angle = 45 - y_counter*interval+y_tilt
+#     if y_angle<=-y_angle_limit and y_angle>-45:
 #         x_counter=0
 #         for candela in x_values:
-#             x_angle = -90 + x_counter*interval+x_tilt
-#             if x_angle<90 and x_angle>-90:
+#             x_angle = -45 + x_counter*interval+x_tilt
+#             if x_angle<45 and x_angle>-45:
 #             #print(y_angle, x_angle, candela)
 #                 x = math.tan(((90+y_angle) * math.pi) / 180) * height
 #                 z = math.tan((x_angle * math.pi) / 180) * x
@@ -188,8 +189,8 @@ angular_element = angular_element-1
 #     y_counter+=1
     
 #reverse ground project calculations
-height = 8
-y_tilt = 0
+height = 20
+y_tilt = -30
 x_tilt = 0
 
 increments = 1
@@ -210,74 +211,75 @@ for x in range(1,x_range+1):
         theta_y = -90+math.degrees(math.atan(x/height))-y_tilt
         x_th_1, x_th_2 = 0, 0
         y_th_1, y_th_2 = 0, 0
-        for xth in range(element_count):
-            angle = -90 + xth*2
-            #print(angle)
-            if theta_x==angle:
-                x_th_1 = xth
-                x_th_2 = xth
-                break
-            if theta_x < 0:
-                if theta_x < angle and angle<=0:
-                    x_th_1 = xth
-                    x_th_2 = xth-1
-                    #print("x - negative",angle,theta_x, -90+x_th*2)
-                    break
-            else:
-                if theta_x <= angle and angle>=0:
-                    x_th_1 = xth
-                    x_th_2 = xth-1
-                    #print("x - positive",angle,theta_x,-90+x_th*2)
-                    break
-            for yth in range(element_count):
-                angle = -90 + yth*2
+        if theta_y>=-45 and theta_x>-45 and theta_x<45:
+            for xth in range(element_count):
+                angle = -45 + xth*1
                 #print(angle)
-                if theta_y==angle:
-                    y_th_1 = yth
-                    y_th_2 = yth
+                if theta_x==angle:
+                    x_th_1 = xth
+                    x_th_2 = xth
                     break
-                if theta_y < 0:
-                    if theta_y < angle and angle<=0:
-                        y_th_1 = yth
-                        y_th_2 = yth-1
-                        #print("y - negative",angle,theta_y, -90+y_th*2)
+                if theta_x < 0:
+                    if theta_x < angle and angle<=0:
+                        x_th_1 = xth
+                        x_th_2 = xth-1
+                        #print("x - negative",angle,theta_x, -90+x_th*2)
                         break
                 else:
-                    if theta_y < angle and angle>=0:
-                        y_th_1 = yth
-                        y_th_2 = yth-1
-                        #print("y - positive",angle,theta_y,-90+y_th*2)
+                    if theta_x <= angle and angle>=0:
+                        x_th_1 = xth
+                        x_th_2 = xth-1
+                        #print("x - positive",angle,theta_x,-90+x_th*2)
                         break
-        
-        #averaged linear interpolation
-        #interpolating by x axis
-        degree_increment = 2
-        interpolation_level = 20
-        interpolation_steps = degree_increment * interpolation_level
-        c_x_increment_1 = int(y_axis_list[y_th_1][x_th_2])-int(y_axis_list[y_th_1][x_th_1])
-        c_x_increment_2 = int(y_axis_list[y_th_2][x_th_2])-int(y_axis_list[y_th_2][x_th_1])
-        c_x_increment_1 = c_x_increment_1 / interpolation_steps
-        c_x_increment_2 = c_x_increment_2 / interpolation_steps
-        
-        x_dif = theta_x-(-90+x_th_1*2)
-        c_x_1 = int(y_axis_list[y_th_1][x_th_2]) + (x_dif * interpolation_level * c_x_increment_1)
-        c_x_2 = int(y_axis_list[y_th_2][x_th_2]) + (x_dif * interpolation_level * c_x_increment_2)
-        
-        c_y_increment = c_x_2 - c_x_1
-        c_y_increment = c_y_increment / interpolation_steps
-        
-        y_dif = theta_y - (-90+y_th_1*2) 
-        c_y = c_x_1 - (c_y_increment * interpolation_level * y_dif)
-        candela = c_y
-        #print(theta_x, theta_y,(-90+x_th_1*2), (-90+x_th_2*2),(-90+y_th_1*2), (-90+y_th_2*2),"dif data",x_dif, c_x_increment_1,c_x_increment_2,"x candela", c_x_1, c_x_2,"final candela",c_y,"set 1", y_axis_list[y_th_1][x_th_1], y_axis_list[y_th_1][x_th_2],"set 2", y_axis_list[y_th_2][x_th_1], y_axis_list[y_th_2][x_th_2])
-        
-        # candela = y_axis_list[y_th_1][x_th_1]
-        d = math.sqrt((height**2)+(x**2)+(z**2))
-        lux = (float(candela)*candela_to_lux_modifier)/(d**2)
-        if z ==0 and x%25==0:
-            print("calculated theta:",theta_x,theta_y,"list theta",-90+x_th_1*2,-90+y_th_1*2,"z,x",z,x,"interpolated candela",candela,c_x_1, c_x_2,"distance",d,"lux",lux,"original candelas",-90+x_th_1*2,-90+y_th_1*2, y_axis_list[y_th_1][x_th_1],-90+x_th_2*2,-90+y_th_1*2,y_axis_list[y_th_1][x_th_2],-90+x_th_1*2,-90+y_th_2*2,y_axis_list[y_th_2][x_th_1],-90+x_th_2*2,-90+y_th_2*2,y_axis_list[y_th_2][x_th_2])
-        #print("calculated theta:",theta_x,theta_y,"list theta x",-90+x_th_1*2,-90+x_th_2*2,"list theta y",-90+y_th_1*2,-90+y_th_2*2,"z,x",z,x,"candela",candela,d,lux)
-        projection_list.append((z,x,lux))
+                for yth in range(element_count):
+                    angle = -45 + yth*1
+                    #print(angle)
+                    if theta_y==angle:
+                        y_th_1 = yth
+                        y_th_2 = yth
+                        break
+                    if theta_y < 0:
+                        if theta_y < angle and angle<=0:
+                            y_th_1 = yth
+                            y_th_2 = yth-1
+                            #print("y - negative",angle,theta_y, -90+y_th*2)
+                            break
+                    else:
+                        if theta_y < angle and angle>=0:
+                            y_th_1 = yth
+                            y_th_2 = yth-1
+                            #print("y - positive",angle,theta_y,-90+y_th*2)
+                            break
+            
+            #averaged linear interpolation
+            #interpolating by x axis
+            degree_increment = 1
+            interpolation_level = 1
+            interpolation_steps = degree_increment * interpolation_level
+            c_x_increment_1 = float(y_axis_list[y_th_1][x_th_2])-float(y_axis_list[y_th_1][x_th_1])
+            c_x_increment_2 = float(y_axis_list[y_th_2][x_th_2])-float(y_axis_list[y_th_2][x_th_1])
+            c_x_increment_1 = c_x_increment_1 / interpolation_steps
+            c_x_increment_2 = c_x_increment_2 / interpolation_steps
+            
+            x_dif = theta_x-(-45+x_th_1*1)
+            c_x_1 = float(y_axis_list[y_th_1][x_th_2]) + (x_dif * interpolation_level * c_x_increment_1)
+            c_x_2 = float(y_axis_list[y_th_2][x_th_2]) + (x_dif * interpolation_level * c_x_increment_2)
+            
+            c_y_increment = c_x_2 - c_x_1
+            c_y_increment = c_y_increment / interpolation_steps
+            
+            y_dif = theta_y - (-45+y_th_1*1) 
+            c_y = c_x_1 - (c_y_increment * interpolation_level * y_dif)
+            candela = c_y
+            #print(theta_x, theta_y,(-90+x_th_1*2), (-90+x_th_2*2),(-90+y_th_1*2), (-90+y_th_2*2),"dif data",x_dif, c_x_increment_1,c_x_increment_2,"x candela", c_x_1, c_x_2,"final candela",c_y,"set 1", y_axis_list[y_th_1][x_th_1], y_axis_list[y_th_1][x_th_2],"set 2", y_axis_list[y_th_2][x_th_1], y_axis_list[y_th_2][x_th_2])
+            
+            # candela = y_axis_list[y_th_1][x_th_1]
+            d = math.sqrt((height**2)+(x**2)+(z**2))
+            lux = (float(candela)*candela_to_lux_modifier)/(d**2)
+            if z ==0 and x%25==0:
+                print("calculated theta:",theta_x,theta_y,"list theta",-45+x_th_1*1,-45+y_th_1*1,"z,x",z,x,"interpolated candela",candela,c_x_1, c_x_2,"distance",d,"lux",lux,"original candelas",-45+x_th_1*15,-45+y_th_1*15, y_axis_list[y_th_1][x_th_1],-45+x_th_2*15,-45+y_th_1*15,y_axis_list[y_th_1][x_th_2],-45+x_th_1*15,-45+y_th_2*15,y_axis_list[y_th_2][x_th_1],-45+x_th_2*15,-45+y_th_2*15,y_axis_list[y_th_2][x_th_2])
+            #print("calculated theta:",theta_x,theta_y,"list theta x",-90+x_th_1*2,-90+x_th_2*2,"list theta y",-90+y_th_1*2,-90+y_th_2*2,"z,x",z,x,"candela",candela,d,lux)
+            projection_list.append((z,x,lux))
 
 
 class LuxPlotter(QtWidgets.QWidget):
