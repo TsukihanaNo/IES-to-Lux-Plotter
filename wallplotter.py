@@ -2,7 +2,7 @@ import os, sys
 import math
 from PySide6 import QtCore, QtGui, QtWidgets
 
-f_path = "flood_values.csv"
+f_path = "spot_values.csv"
 
 y_axis_list = []
 
@@ -34,17 +34,17 @@ candela_to_lux_modifier = 10.76391 #10.76391for feet only, not required for mete
 # x_range = int(max_distance/increments)
 
 #wall projection calculation
-wall_distance = 30
-interval = 2
+wall_distance = 20
+interval = 1
 y_counter = 0
 x_tilt = 0
 y_tilt = 0
 projection_list=[]
 for x_values in y_axis_list:
-    y_angle = -90 + y_counter*interval+y_tilt
+    y_angle = 45 - y_counter*interval+y_tilt
     x_counter=0
     for candela in x_values:
-        x_angle = -90 + x_counter*interval+x_tilt
+        x_angle = -45 + x_counter*interval+x_tilt
         #print(y_angle, x_angle, candela)
         y = math.tan(y_angle * math.pi / 180) * wall_distance
         z = math.tan(x_angle * math.pi / 180) * wall_distance
@@ -117,16 +117,16 @@ class RenderWallProjection(QtWidgets.QWidget):
             y = lux_item[1]
             #lux = lux_item[2]
             if y < self.yrange and y > -self.yrange and x<self.xrange and x>-self.xrange:
-                if lux_item[2]>0 and lux_item[2] < 25:
-                    pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[2]/25)*255)),pixel_size)
-                elif lux_item[2] >25 and lux_item[2] < 50:
-                    pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[2]/50)*255),0),pixel_size)
-                elif lux_item[2] >50 and lux_item[2] < 100:
+                if lux_item[2]>0 and lux_item[2] <= 10:
+                    pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[2]/10)*255)),pixel_size)
+                elif lux_item[2] >10 and lux_item[2] <= 25:
+                    pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[2]/25)*255),0),pixel_size)
+                elif lux_item[2] >25 and lux_item[2] <= 50:
                     pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/50)*10),0),pixel_size)
-                elif lux_item[2] >100 and lux_item[2] < 250:
-                    pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/250)*165),0),pixel_size)
-                elif lux_item[2] >250 and lux_item[2] < 1000:
-                    pen = QtGui.QPen(QtGui.QColor(255,80-int(((lux_item[2])/1000)*80),0),pixel_size)
+                elif lux_item[2] >50 and lux_item[2] <= 100:
+                    pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/100)*165),0),pixel_size)
+                elif lux_item[2] >100 and lux_item[2] <= 200:
+                    pen = QtGui.QPen(QtGui.QColor(255,150-int(((lux_item[2])/200)*150),0),pixel_size)
                 else:
                     pen = QtGui.QPen(QtCore.Qt.white,pixel_size)
                 painter.setPen(pen)
