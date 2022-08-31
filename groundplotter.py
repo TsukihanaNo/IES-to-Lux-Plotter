@@ -2,7 +2,7 @@ import os, sys
 import math
 from PySide6 import QtCore, QtGui, QtWidgets
 
-f_path = "both_values.csv"
+f_path = "both_values_tweaked.csv"
 
 y_axis_list = []
 
@@ -24,23 +24,24 @@ with open(f_path) as f:
 candela_to_lux_modifier = 10.76391 #10.76391for feet only, not required for meters
 
 #reverse ground project calculations
-height = 8
-y_tilt = 0
+height = 20
+y_tilt = -5
 x_tilt = 0
 
 increments = 1
-x_distance = 800
+x_distance = 500
 x_range = int(x_distance/increments)
-z_distance = 150
+z_distance = 200
 z_range = int(z_distance/increments)*2
 
-starting_x_deg = -45
-starting_y_deg = 45
-ending_x_deg = 45
-ending_y_deg = -45
-y_degrees_increment = 15
+starting_x_deg = -90
+starting_y_deg = 90
+ending_x_deg = 90
+ending_y_deg = -90
+y_degrees_increment = 18
 x_degrees_increment = 15
-element_count = len(y_axis_list)
+y_element_count = len(y_axis_list)
+x_element_count = len(y_axis_list[0])
 projection_list = []
 
 for x in range(1,x_range+1):
@@ -52,8 +53,9 @@ for x in range(1,x_range+1):
         x_th_1, x_th_2 = 0, 0
         y_th_1, y_th_2 = 0, 0
         if theta_y >= ending_y_deg and theta_x >= starting_x_deg and theta_x <= ending_x_deg:
-            for xth in range(element_count):
+            for xth in range(x_element_count):
                 angle = starting_x_deg + xth*x_degrees_increment
+                #print(angle)
                 #print(angle)
                 if theta_x==angle:
                     x_th_1 = xth
@@ -71,7 +73,7 @@ for x in range(1,x_range+1):
                         x_th_2 = xth-1
                         #print("x - positive",angle,theta_x,-45+x_th_1*15,-45+x_th_2*15)
                         break
-            for yth in range(element_count):
+            for yth in range(y_element_count):
                 angle = starting_y_deg - yth*y_degrees_increment
                 #print(angle)
                 if theta_y==angle:
@@ -117,7 +119,7 @@ for x in range(1,x_range+1):
             # candela = y_axis_list[y_th_1][x_th_1]
             d = math.sqrt((height**2)+(x**2)+(z**2))
             lux = (float(candela)*candela_to_lux_modifier)/(d**2)
-            if z ==0 and x%10==0:
+            if z ==0 and x%25==0:
                 print("calculated theta:",theta_x,theta_y,"list theta",starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment,"z,x",z,x,"interpolated candela",candela,c_x_1, c_x_2,"distance",d,"lux",lux,"original candelas",starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment, y_axis_list[y_th_1][x_th_1],starting_x_deg+x_th_2*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment,y_axis_list[y_th_1][x_th_2],starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_2*y_degrees_increment,y_axis_list[y_th_2][x_th_1],starting_x_deg+x_th_2*x_degrees_increment,starting_y_deg-y_th_2*y_degrees_increment,y_axis_list[y_th_2][x_th_2])
             #print("calculated theta:",theta_x,theta_y,"list theta x",-90+x_th_1*2,-90+x_th_2*2,"list theta y",-90+y_th_1*2,-90+y_th_2*2,"z,x",z,x,"candela",candela,d,lux)
             projection_list.append((z,x,lux))
@@ -186,16 +188,21 @@ class RenderGroundProjection(QtWidgets.QWidget):
             y = lux_item[1]
             #lux = lux_item[2]
             if y < self.yrange and y > -self.yrange and x<self.xrange and x>-self.xrange:
-                if lux_item[2]>0 and lux_item[2] <= 10:
-                    pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[2]/10)*255)),pixel_size)
-                elif lux_item[2] >10 and lux_item[2] <= 25:
-                    pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[2]/25)*255),0),pixel_size)
-                elif lux_item[2] >25 and lux_item[2] <= 50:
-                    pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/50)*10),0),pixel_size)
-                elif lux_item[2] >50 and lux_item[2] <= 100:
-                    pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/100)*165),0),pixel_size)
-                elif lux_item[2] >100 and lux_item[2] <= 200:
-                    pen = QtGui.QPen(QtGui.QColor(255,150-int(((lux_item[2])/200)*150),0),pixel_size)
+                if lux_item[2]>0.4 and lux_item[2] <= 2:
+                    # pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[2]/10)*255)),pixel_size)
+                    pen = QtGui.QPen(QtCore.Qt.blue,pixel_size)
+                elif lux_item[2] >2 and lux_item[2] <= 10:
+                    # pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[2]/25)*255),0),pixel_size)
+                    pen = QtGui.QPen(QtCore.Qt.green,pixel_size)
+                elif lux_item[2] >10 and lux_item[2] <= 20:
+                    # pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/50)*10),0),pixel_size)
+                    pen = QtGui.QPen(QtCore.Qt.yellow,pixel_size)
+                elif lux_item[2] >20 and lux_item[2] <= 40:
+                    # pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/100)*165),0),pixel_size)
+                    pen = QtGui.QPen(QtCore.Qt.red,pixel_size)
+                elif lux_item[2] >40 and lux_item[2] <= 75:
+                    # pen = QtGui.QPen(QtGui.QColor(255,150-int(((lux_item[2])/200)*150),0),pixel_size)
+                    pen = QtGui.QPen(QtCore.Qt.magenta,pixel_size)
                 else:
                     pen = QtGui.QPen(QtCore.Qt.white,pixel_size)
                 painter.setPen(pen)
