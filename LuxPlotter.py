@@ -2,7 +2,7 @@ import os, sys
 import math
 from PySide6 import QtCore, QtGui, QtWidgets
 
-f_path = "raw_values.csv"
+f_path = "both_values_tweaked.csv"
 
 y_axis_list = []
 
@@ -14,14 +14,14 @@ with open(f_path) as f:
         y_axis_list.append(line.split(","))
         
 #rotate grid
-temp_list_2 = []
-for i in range(len(y_axis_list[0])):
-    temp_list = []
-    for j in range(len(y_axis_list)):
-        temp_list.append(y_axis_list[j][i])
-    temp_list_2.append(temp_list)
+# temp_list_2 = []
+# for i in range(len(y_axis_list[0])):
+#     temp_list = []
+#     for j in range(len(y_axis_list)):
+#         temp_list.append(y_axis_list[j][i])
+#     temp_list_2.append(temp_list)
     
-y_axis_list = temp_list_2
+# y_axis_list = temp_list_2
 
 candela_to_lux_modifier = 10.76391 #10.76391for feet only, not required for meters
 
@@ -54,50 +54,50 @@ class LuxPlotter(QtWidgets.QWidget):
         self.label.setScaledContents(True)
         
         #ground plot
-        # height = 8
-        # x_tilt = 0
-        # y_tilt = 0
-        # x_distance = 1000  #distance out
-        # z_distance = 300  #distance on the side
-        # increments = 1
-        # starting_x_deg=-90
-        # starting_y_deg=90
-        # ending_x_deg=90
-        # ending_y_deg=-90
-        # x_degrees_increment=2
-        # y_degrees_increment=2
-        
-        # plot_title = f"Ground Plot at {height} with x tilt: {x_tilt}, y tilt: {y_tilt}"
-        
-        # self.offsetx =50
-        # self.offsety = 150
-        # self.xrange = z_distance*2
-        # self.yrange = x_distance
-        # self.plot_width = self.xrange*2+100
-        # self.plot_height = self.yrange*2+200
-        # projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
-        
-        #wall plot
-        wall_distance = 80
+        height = 20
         x_tilt = 0
         y_tilt = 0
-        x_distance = 300 #must be in increments of 25
-        y_distance = 300 #must be in increments of 25
+        x_distance = 600  #distance out
+        z_distance = 300  #distance on the side
         increments = 1
         starting_x_deg=-90
         starting_y_deg=90
         ending_x_deg=90
         ending_y_deg=-90
-        x_degrees_increment=2
-        y_degrees_increment=2
-        self.offsetx = 50
-        self.offsety = y_distance+75
-        self.xrange = x_distance
-        self.yrange = y_distance
-        self.plot_width = self.xrange*4+100
-        self.plot_height = self.yrange*4+200
-        plot_title = f"Wall Plot at {wall_distance} from the source with x tilt: {x_tilt}, y tilt: {y_tilt}"
-        projection_list,max_lux = self.generateWallPlot(wall_distance, y_tilt, x_tilt, increments, x_distance, y_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
+        x_degrees_increment=15
+        y_degrees_increment=18
+        
+        plot_title = f"Ground Plot at {height} with x tilt: {x_tilt}, y tilt: {y_tilt}"
+        
+        self.offsetx =50
+        self.offsety = 150
+        self.xrange = z_distance*2
+        self.yrange = x_distance
+        self.plot_width = self.xrange*2+100
+        self.plot_height = self.yrange*2+200
+        projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
+        
+        #wall plot
+        # wall_distance = 100
+        # x_tilt = 0
+        # y_tilt = 0
+        # x_distance = 300 #must be in increments of 25
+        # y_distance = 300 #must be in increments of 25
+        # increments = 1
+        # starting_x_deg=-90
+        # starting_y_deg=90
+        # ending_x_deg=90
+        # ending_y_deg=-90
+        # x_degrees_increment=15
+        # y_degrees_increment=18
+        # self.offsetx = 50
+        # self.offsety = y_distance+75
+        # self.xrange = x_distance
+        # self.yrange = y_distance
+        # self.plot_width = self.xrange*4+100
+        # self.plot_height = self.yrange*4+200
+        # plot_title = f"Wall Plot at {wall_distance} from the source with x tilt: {x_tilt}, y tilt: {y_tilt}"
+        #projection_list,max_lux = self.generateWallPlot(wall_distance, y_tilt, x_tilt, increments, x_distance, y_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
         
         
         
@@ -107,11 +107,23 @@ class LuxPlotter(QtWidgets.QWidget):
         canvas.fill(QtCore.Qt.gray)
         self.label.setPixmap(canvas)
         
-        self.step_map = [.4,max_lux*.1**2,max_lux*.2**2,max_lux*.3**2,max_lux*.4**2,max_lux*.5**2,max_lux*.6**2,max_lux*.7**2,max_lux*.8**2,max_lux*.9**2,max_lux]
-        print(self.step_map)
+        #ratio'd step map
+        #self.step_map = [.4,max_lux*.1**2,max_lux*.2**2,max_lux*.3**2,max_lux*.4**2,max_lux*.5**2,max_lux*.6**2,max_lux*.7**2,max_lux*.8**2,max_lux*.9**2,max_lux]
+        
+        #normalized step map
+        self.step_map = [1,2,4,8,16,32,64,128,256,512,1024]
+        #print(self.step_map)
         
         #self.GroundPlot(projection_list,increments,plot_title)
-        self.WallPlot(projection_list,increments,plot_title)
+        for i in range(90):
+            canvas.fill(QtCore.Qt.gray)
+            self.label.setPixmap(canvas)
+            y_tilt = - i
+            projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
+            print("rendering")
+            self.GroundPlot(projection_list,increments,plot_title)
+            self.save(f"ground_plot_angle_{y_tilt}.png")
+            print("saved")
         self.FitToWindow()
         
         #self.scrollarea.setWidget(self.renderer)
@@ -259,7 +271,16 @@ class LuxPlotter(QtWidgets.QWidget):
         self.label.resize((self.scale_factor)*self.label.pixmap().size())
         
     def save(self):
-        self.label.pixmap().save("testing.png","PNG",100)
+        try:
+            filename = QtWidgets.QFileDialog.getSaveFileName(self,("Save File"),"Plot_Output.png",".png")
+            self.label.pixmap().save(filename[0],"PNG",100)
+            self.dispMsg("Save!")
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error Occured while saving.\n Error: {e}")
+            
+    def save(self,filename):
+        self.label.pixmap().save(filename,"PNG",100)
         
     
     def WallPlot(self,projection_list,increments,plot_title):
@@ -471,6 +492,11 @@ class LuxPlotter(QtWidgets.QWidget):
             QtGui.QGuiApplication.primaryScreen().availableGeometry(),
         ),
     )
+        
+    def dispMsg(self,msg):
+        msgbox = QtWidgets.QMessageBox()
+        msgbox.setText(msg+"        ")
+        msgbox.exec()
 
         
 
