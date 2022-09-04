@@ -1,8 +1,8 @@
 import os, sys
-import math
+import math, time
 from PySide6 import QtCore, QtGui, QtWidgets
 
-f_path = "both_values_tweaked.csv"
+f_path = "flood_values_tweaked.csv"
 
 y_axis_list = []
 
@@ -54,12 +54,12 @@ class LuxPlotter(QtWidgets.QWidget):
         self.label.setScaledContents(True)
         
         #ground plot
-        height = 20
+        height = 8
         x_tilt = 0
         y_tilt = 0
-        x_distance = 600  #distance out
+        x_distance = 800  #distance out
         z_distance = 300  #distance on the side
-        increments = 1
+        increments = 5
         starting_x_deg=-90
         starting_y_deg=90
         ending_x_deg=90
@@ -67,7 +67,7 @@ class LuxPlotter(QtWidgets.QWidget):
         x_degrees_increment=15
         y_degrees_increment=18
         
-        plot_title = f"Ground Plot at {height} with x tilt: {x_tilt}, y tilt: {y_tilt}"
+        plot_title = f"Ground Plot at {height} ft. with x tilt: {x_tilt} deg., y tilt: {y_tilt} deg."
         
         self.offsetx =50
         self.offsety = 150
@@ -97,7 +97,7 @@ class LuxPlotter(QtWidgets.QWidget):
         # self.plot_width = self.xrange*4+100
         # self.plot_height = self.yrange*4+200
         # plot_title = f"Wall Plot at {wall_distance} from the source with x tilt: {x_tilt}, y tilt: {y_tilt}"
-        #projection_list,max_lux = self.generateWallPlot(wall_distance, y_tilt, x_tilt, increments, x_distance, y_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
+        # projection_list,max_lux = self.generateWallPlot(wall_distance, y_tilt, x_tilt, increments, x_distance, y_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
         
         
         
@@ -108,22 +108,26 @@ class LuxPlotter(QtWidgets.QWidget):
         self.label.setPixmap(canvas)
         
         #ratio'd step map
-        #self.step_map = [.4,max_lux*.1**2,max_lux*.2**2,max_lux*.3**2,max_lux*.4**2,max_lux*.5**2,max_lux*.6**2,max_lux*.7**2,max_lux*.8**2,max_lux*.9**2,max_lux]
+        # self.step_map = [.1,max_lux*.1**2,max_lux*.2**2,max_lux*.3**2,max_lux*.4**2,max_lux*.5**2,max_lux*.6**2,max_lux*.7**2,max_lux*.8**2,max_lux*.9**2,max_lux]
         
         #normalized step map
         self.step_map = [1,2,4,8,16,32,64,128,256,512,1024]
         #print(self.step_map)
         
         #self.GroundPlot(projection_list,increments,plot_title)
-        for i in range(90):
-            canvas.fill(QtCore.Qt.gray)
-            self.label.setPixmap(canvas)
-            y_tilt = - i
-            projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
-            print("rendering")
-            self.GroundPlot(projection_list,increments,plot_title)
-            self.save(f"ground_plot_angle_{y_tilt}.png")
-            print("saved")
+        # for i in range(90):
+        #     canvas.fill(QtCore.Qt.gray)
+        #     self.label.setPixmap(canvas)
+        #     y_tilt = - i
+        #     projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
+        #     print("rendering")
+        #     self.GroundPlot(projection_list,increments,plot_title)
+        #     self.save(f"ground_plot_angle_{y_tilt}.png")
+        #     print("saved")
+        start = time.time()
+        self.GroundPlot(projection_list,increments,plot_title)
+        end = time.time()
+        print(end-start)
         self.FitToWindow()
         
         #self.scrollarea.setWidget(self.renderer)
@@ -138,56 +142,78 @@ class LuxPlotter(QtWidgets.QWidget):
         self.show()
         
     def getInterpolatedCandela(self,theta_x,starting_x_deg,x_degrees_increment,theta_y,starting_y_deg, y_degrees_increment,x_element_count,y_element_count,increments):
-        x_th_1, x_th_2 = 0, 0
-        y_th_1, y_th_2 = 0, 0
-        for xth in range(x_element_count):
-            angle = starting_x_deg + xth*x_degrees_increment
-            #print(angle)
-            #print(angle)
-            if theta_x==angle:
-                x_th_1 = xth
-                x_th_2 = xth
-                break
-            if theta_x < 0:
-                if theta_x < angle and angle<=0:
-                    x_th_1 = xth
-                    x_th_2 = xth-1
-                    #print("x - negative",angle,theta_x, -45+x_th_1*15,-45+x_th_2*15)
-                    break
-            else:
-                if theta_x <= angle and angle>=0:
-                    x_th_1 = xth
-                    x_th_2 = xth-1
-                    #print("x - positive",angle,theta_x,-45+x_th_1*15,-45+x_th_2*15)
-                    break
-        for yth in range(y_element_count):
-            angle = starting_y_deg - yth*y_degrees_increment
-            #print(angle)
-            if theta_y==angle:
-                y_th_1 = yth
-                y_th_2 = yth
-                break
-            if theta_y < 0:
-                if theta_y > angle and angle<=0:
-                    y_th_1 = yth
-                    y_th_2 = yth-1
-                    #print("y - negative",angle,theta_y, 45-y_th_1*15,45-y_th_2*15)
-                    break
-            else:
-                if theta_y >= angle and angle>=0:
-                    y_th_1 = yth
-                    y_th_2 = yth-1
-                    #print("y - positive",angle,theta_y,-90+y_th*2)
-                    break
+        # x_th_1, x_th_2 = 0, 0
+        # y_th_1, y_th_2 = 0, 0
+        
+        #finding x
+        if starting_x_deg<0:
+            x_degrees_increment = -1*x_degrees_increment
+        if starting_y_deg<0:
+            y_degrees_increment = -1*y_degrees_increment
+        x_th_1 = math.ceil((starting_x_deg-theta_x)/x_degrees_increment)
+        if theta_x%x_degrees_increment!=0:
+            x_th_2 = x_th_1 -1
+        else:
+            x_th_2 = x_th_1
+        
+        y_th_1 = math.ceil((starting_y_deg-theta_y)/y_degrees_increment)
+        y_th_2 = y_th_1 -1
+        if theta_y%y_degrees_increment!=0:
+            y_th_2 = y_th_1 -1
+        else:
+            y_th_2 = y_th_1
+        
+        # print("theta x",theta_x,x_th_1,starting_x_deg-x_th_1*x_degrees_increment,x_th_2,starting_x_deg-x_th_2*x_degrees_increment,"theta y",theta_y,y_th_1,starting_y_deg-y_th_1*y_degrees_increment,y_th_2,starting_y_deg-y_th_2*y_degrees_increment)
+        
+        # for xth in range(x_element_count):
+        #     angle = starting_x_deg + xth*x_degrees_increment
+        #     #print(angle)
+        #     #print(angle)
+        #     if theta_x==angle:
+        #         x_th_1 = xth
+        #         x_th_2 = xth
+        #         break
+        #     if theta_x < 0:
+        #         if theta_x < angle and angle<=0:
+        #             x_th_1 = xth
+        #             x_th_2 = xth-1
+        #             #print("x - negative",angle,theta_x, -45+x_th_1*15,-45+x_th_2*15)
+        #             break
+        #     else:
+        #         if theta_x <= angle and angle>=0:
+        #             x_th_1 = xth
+        #             x_th_2 = xth-1
+        #             #print("x - positive",angle,theta_x,-45+x_th_1*15,-45+x_th_2*15)
+        #             break
+        # for yth in range(y_element_count):
+        #     angle = starting_y_deg - yth*y_degrees_increment
+        #     #print(angle)
+        #     if theta_y==angle:
+        #         y_th_1 = yth
+        #         y_th_2 = yth
+        #         break
+        #     if theta_y < 0:
+        #         if theta_y > angle and angle<=0:
+        #             y_th_1 = yth
+        #             y_th_2 = yth-1
+        #             #print("y - negative",angle,theta_y, 45-y_th_1*15,45-y_th_2*15)
+        #             break
+        #     else:
+        #         if theta_y >= angle and angle>=0:
+        #             y_th_1 = yth
+        #             y_th_2 = yth-1
+        #             #print("y - positive",angle,theta_y,-90+y_th*2)
+        #             break
         
         #averaged linear interpolation
         #interpolating by x axis
         c_x_increment_1 = float(y_axis_list[y_th_1][x_th_1])-float(y_axis_list[y_th_1][x_th_2])
         c_x_increment_2 = float(y_axis_list[y_th_2][x_th_1])-float(y_axis_list[y_th_2][x_th_2])
-        c_x_increment_1 = c_x_increment_1 / x_degrees_increment
-        c_x_increment_2 = c_x_increment_2 / x_degrees_increment
+        c_x_increment_1 = c_x_increment_1 / abs(x_degrees_increment)
+        c_x_increment_2 = c_x_increment_2 / abs(x_degrees_increment)
         
-        x_dif = theta_x-(starting_x_deg+x_th_1*x_degrees_increment)
+        #x_dif = theta_x-(starting_x_deg+x_th_1*x_degrees_increment)
+        x_dif = theta_x-(starting_x_deg-x_th_1*x_degrees_increment)
         if x_dif>0:
             c_x_1 = float(y_axis_list[y_th_1][x_th_2]) + (x_dif * c_x_increment_1)
             c_x_2 = float(y_axis_list[y_th_2][x_th_2]) + (x_dif * c_x_increment_2)
@@ -200,6 +226,15 @@ class LuxPlotter(QtWidgets.QWidget):
         
         y_dif = theta_y - (starting_y_deg-y_th_1*y_degrees_increment) 
         c_y = c_x_1 + (c_y_increment * y_dif) #final interpolated candela value
+        
+        # if theta_x ==0:
+        #     print("calculated theta:",theta_x,theta_y,"list theta",starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment,starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment, y_axis_list[y_th_1][x_th_1],starting_x_deg+x_th_2*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment,y_axis_list[y_th_1][x_th_2],starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_2*y_degrees_increment,y_axis_list[y_th_2][x_th_1],starting_x_deg+x_th_2*x_degrees_increment,starting_y_deg-y_th_2*y_degrees_increment,y_axis_list[y_th_2][x_th_2])
+
+        # if theta_x ==0:
+        #     print(x_dif, y_dif, c_y,"calculated theta:",theta_x,theta_y,"list theta",starting_x_deg-x_th_1*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment,starting_x_deg-x_th_1*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment, y_axis_list[y_th_1][x_th_1],starting_x_deg-x_th_2*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment,y_axis_list[y_th_1][x_th_2],starting_x_deg-x_th_1*x_degrees_increment,starting_y_deg-y_th_2*y_degrees_increment,y_axis_list[y_th_2][x_th_1],starting_x_deg-x_th_2*x_degrees_increment,starting_y_deg-y_th_2*y_degrees_increment,y_axis_list[y_th_2][x_th_2])
+
+        
+                
         #print("calc thetas",theta_x, theta_y,"list theta x,x2",(starting_x_deg+x_th_1*degrees_increment), (starting_x_deg+x_th_2*degrees_increment),"list theta y,y2",(starting_y_deg-y_th_1*degrees_increment), (starting_y_deg-y_th_2*degrees_increment),"dif data x,y",x_dif, y_dif, c_x_increment_1,c_x_increment_2,"x candela", c_x_1, c_x_2,"final candela",c_y,"set 1", y_axis_list[y_th_1][x_th_1], y_axis_list[y_th_1][x_th_2],"set 2", y_axis_list[y_th_2][x_th_1], y_axis_list[y_th_2][x_th_2])
         return c_y
     
@@ -223,8 +258,8 @@ class LuxPlotter(QtWidgets.QWidget):
                 lux = (float(candela)*candela_to_lux_modifier)/(d**2)
                 if lux > max_lux:
                     max_lux = lux 
-                #if z ==0 and x%25==0:
-                #    print("calculated theta:",theta_x,theta_y,"list theta",starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment,"z,x",z,x,"interpolated candela",candela,c_x_1, c_x_2,"distance",d,"lux",lux,"original candelas",starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment, y_axis_list[y_th_1][x_th_1],starting_x_deg+x_th_2*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment,y_axis_list[y_th_1][x_th_2],starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_2*y_degrees_increment,y_axis_list[y_th_2][x_th_1],starting_x_deg+x_th_2*x_degrees_increment,starting_y_deg-y_th_2*y_degrees_increment,y_axis_list[y_th_2][x_th_2])
+                # if z ==0 and x%25==0:
+                #     print("calculated theta:",theta_x,theta_y,"list theta",starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment,"z,x",z,x,"interpolated candela",candela,"distance",d,"lux",lux,"original candelas",starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment, y_axis_list[y_th_1][x_th_1],starting_x_deg+x_th_2*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment,y_axis_list[y_th_1][x_th_2],starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_2*y_degrees_increment,y_axis_list[y_th_2][x_th_1],starting_x_deg+x_th_2*x_degrees_increment,starting_y_deg-y_th_2*y_degrees_increment,y_axis_list[y_th_2][x_th_2])
                 #print("calculated theta:",theta_x,theta_y,"list theta x",-90+x_th_1*2,-90+x_th_2*2,"list theta y",-90+y_th_1*2,-90+y_th_2*2,"z,x",z,x,"candela",candela,d,lux)
                 projection_list.append((z,x,lux))
         return projection_list,max_lux
@@ -292,71 +327,57 @@ class LuxPlotter(QtWidgets.QWidget):
         #draw axis
         pen = QtGui.QPen(QtCore.Qt.white,2)
         painter.setPen(pen)
-        #+y
-        # point1 = QtCore.QPointF(self.offsetx+self.xrange, self.height-self.offsety-self.yrange*2)
-        # point2 = QtCore.QPointF(self.offsetx+self.xrange, self.height-self.offsety)
-        # line1 = QtCore.QLineF(point1, point2)
-        # painter.drawLine(line1)
-        # #-y
-        # point1 = QtCore.QPointF(self.offsetx+self.xrange, self.height-self.offsety+self.yrange*2)
-        # point2 = QtCore.QPointF(self.offsetx+self.xrange, self.height-self.offsety)
-        # line1 = QtCore.QLineF(point1, point2)
-        # painter.drawLine(line1)
-        #x
-        # point1 = QtCore.QPointF(self.offsetx, self.height-self.offsety)
-        # point2 = QtCore.QPointF(self.width-self.offsetx, self.height-self.offsety)
-        # line1 = QtCore.QLineF(point1, point2)
-        # painter.drawLine(line1)
-
 
         #draw markers
         #-x axis
         for i in range(self.xrange*4+1):
             if i%(50)==0:
-                painter.drawLine(self.offsetx+i,self.plot_height-self.offsety*2+self.yrange*2,self.offsetx+i,self.plot_height-self.offsety*2+self.yrange*2+10)
+                #painter.drawLine(self.offsetx+i,self.plot_height-self.offsety*2+self.yrange*2,self.offsetx+i,self.plot_height-self.offsety*2+self.yrange*2+10)
                 painter.drawText(QtCore.QPointF(self.offsetx+(i)-15, self.plot_height-self.offsety+self.yrange-50),str(-self.xrange+i/2))
-        painter.drawText(QtCore.QPointF(self.plot_width/2-40, self.plot_height+self.yrange-5),"X Distance (ft.)")
+        painter.drawText(QtCore.QPointF(self.plot_width/2-40, self.plot_height+self.yrange-5),"Distance (ft.)")
         #yaxis
         for i in range(self.yrange*2+1):
             if i%(50)==0:
-                painter.drawLine(self.offsetx-5,self.plot_height-self.offsety*2-i,self.offsetx,self.plot_height-self.offsety*2-i)
+                #painter.drawLine(self.offsetx-5,self.plot_height-self.offsety*2-i,self.offsetx,self.plot_height-self.offsety*2-i)
                 painter.drawText(QtCore.QPointF(self.offsetx-40, self.plot_height-self.offsety*2-i+5),str(i/2))
-        #-yaxis
-        for i in range(self.yrange*2+1):
-            if i !=0:
-                if i%(50)==0:
-                    painter.drawLine(self.offsetx-5,self.plot_height-self.offsety*2+i,self.offsetx,self.plot_height-self.offsety*2+i)
+                if i!=0:
                     painter.drawText(QtCore.QPointF(self.offsetx-40, self.plot_height-self.offsety*2+i+5),"-"+str(i/2))
-        painter.drawText(QtCore.QPointF(5, 25),"Y Distance (ft.)")
+        painter.drawText(QtCore.QPointF(5, 25),"Distance (ft.)")
         
         #draw grid
-        pen = QtGui.QPen(QtCore.Qt.gray,1)
+        pen = QtGui.QPen(QtCore.Qt.white,1)
         painter.setPen(pen)
         for i in range(self.xrange*4+1):
             if i%(50)==0:
-                painter.drawLine(self.offsetx+i,0,self.offsetx+i,self.plot_height-self.offsety*2+self.yrange*2+10)
+                painter.drawLine(self.offsetx+i,50,self.offsetx+i,self.plot_height-self.offsety*2+self.yrange*2+10)
         #yaxis
         for i in range(self.yrange*2+1):
             if i%(50)==0:
-                painter.drawLine(self.plot_width,self.plot_height-self.offsety*2-i,self.offsetx,self.plot_height-self.offsety*2-i)
-                painter.drawLine(self.plot_width,self.plot_height-self.offsety*2+i,self.offsetx,self.plot_height-self.offsety*2+i)
+                painter.drawLine(self.plot_width-self.offsetx,self.plot_height-self.offsety*2-i,self.offsetx,self.plot_height-self.offsety*2-i)
+                painter.drawLine(self.plot_width-self.offsetx,self.plot_height-self.offsety*2+i,self.offsetx,self.plot_height-self.offsety*2+i)
+        
         
         
         #draw title
+        font_metric = QtGui.QFontMetrics(painter.font())
+        font_offset = font_metric.boundingRect(plot_title).width()/2
         pen = QtGui.QPen(QtCore.Qt.white,2)
         painter.setPen(pen)
-        painter.drawText(QtCore.QPointF(self.plot_width/2-self.offsetx*2, 20),plot_title)
+        painter.drawText(QtCore.QPointF(self.plot_width/2-font_offset, 20),plot_title)
         
         #draw legend
-        painter.drawText(QtCore.QPointF(self.plot_width/2-self.offsetx-50, self.plot_height-25),f"1 Lux = Intensity of the light of a full moon")
-        legend_distance = self.plot_width - self.offsetx*4
+        s = "1 Lux = Intensity of the light of a full moon"
+        font_offset = font_metric.boundingRect(s).width()/2
+        painter.drawText(QtCore.QPointF(self.plot_width/2-font_offset, self.plot_height-25),s)
+        legend_distance = self.plot_width - self.offsetx*2
         legend_section = legend_distance/10
         for i in range(len(self.color_map)):
             painter.setPen(self.color_map[i])
             painter.setBrush(self.color_map[i])
-            painter.drawRect(self.plot_width/2 - legend_distance/2 - self.offsetx +(i+1)*legend_section - legend_section/2, self.plot_height-90,legend_section,20)
+            painter.drawRect(self.plot_width/2 - legend_distance/2 +(i)*legend_section, self.plot_height-90,legend_section,20)
             painter.setPen(QtGui.Qt.white)
-            painter.drawText(QtCore.QPointF(self.plot_width/2 - legend_distance/2 - self.offsetx +(i+1)*legend_section+legend_section/2-10,self.plot_height-50), f"{round(self.step_map[i+1],2)}")
+            painter.drawText(QtCore.QPointF(self.plot_width/2 -legend_distance/2 +(i)*legend_section-10,self.plot_height-50), f"{round(self.step_map[i],2)}")
+        painter.drawText(QtCore.QPointF(self.plot_width/2 -legend_distance/2 +(10)*legend_section-10,self.plot_height-50), f"{round(self.step_map[10],2)}")
         
         painter.end()
         self.label.setPixmap(canvas)
@@ -382,43 +403,61 @@ class LuxPlotter(QtWidgets.QWidget):
 
 
         #draw markers
+        pen = QtGui.QPen(QtCore.Qt.white,1)
+        painter.setPen(pen)
         #x axis
         for i in range(self.xrange*2+1):
             if i%(50)==0:
-                painter.drawLine(self.offsetx+i,self.plot_height-self.offsety,self.offsetx+i,self.plot_height-self.offsety+10)
+                #painter.drawLine(self.offsetx+i,self.plot_height-self.offsety,self.offsetx+i,self.plot_height-self.offsety+10)
                 painter.drawText(QtCore.QPointF(self.offsetx+(i)-15, self.plot_height-self.offsety+30),str(-self.xrange/2+i/2))
-        painter.drawText(QtCore.QPointF(self.plot_width/2-40, self.plot_height-100),"X Distance (ft.)")
+        painter.drawText(QtCore.QPointF(self.plot_width/2-40, self.plot_height-100),"Distance (ft.)")
         #yaxis
         for i in range(self.yrange*2+1):
             if i%(50)==0:
-                painter.drawLine(self.offsetx-5,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
+                #painter.drawLine(self.offsetx-5,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
                 painter.drawText(QtCore.QPointF(self.offsetx-40, self.plot_height-self.offsety-i+5),str(i/2))
-        painter.drawText(QtCore.QPointF(5, 25),"Y Distance (ft.)")
+        painter.drawText(QtCore.QPointF(5, 25),"Distance (ft.)")
         
         #draw grid
-        pen = QtGui.QPen(QtCore.Qt.gray,1)
-        painter.setPen(pen)
         for i in range(self.xrange*2+1):
             if i%(50)==0:
-                painter.drawLine(self.offsetx+i,self.plot_height-self.offsety,self.offsetx+i,0)
+                painter.drawLine(self.offsetx+i,self.plot_height-self.offsety,self.offsetx+i,50)
         #yaxis
         for i in range(self.yrange*2+1):
             if i%(50)==0:
-                painter.drawLine(self.plot_width,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
+                painter.drawLine(self.plot_width-self.offsetx,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
+                
+        #football field overlay
+        pen = QtGui.QPen(QtCore.Qt.green,5)
+        painter.setPen(pen)
+        #yaxis
+        for i in range(self.xrange*2+1):
+            if (i-self.xrange-160)%320==0:
+                painter.drawLine(self.offsetx+i,self.plot_height-self.offsety,self.offsetx+i,50)
+        for i in range(self.yrange*2+1):
+            if i%(720)==0:
+                painter.drawLine(self.plot_width-self.offsetx,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
 
         #draw title
+        font_metric = QtGui.QFontMetrics(painter.font())
+        font_offset = font_metric.boundingRect(plot_title).width()/2
         pen = QtGui.QPen(QtCore.Qt.white,2)
         painter.setPen(pen)
-        painter.drawText(QtCore.QPointF(self.plot_width/2-self.offsetx-75, 20),plot_title)
+        painter.drawText(QtCore.QPointF(self.plot_width/2-font_offset, 20),plot_title)
         
         #draw legend
-        painter.drawText(QtCore.QPointF(self.plot_width/2-self.offsetx-50, self.plot_height-25),f"1 Lux = Intensity of the light of a full moon")
+        s = "1 Lux = Intensity of the light of a full moon"
+        font_offset = font_metric.boundingRect(s).width()/2
+        painter.drawText(QtCore.QPointF(self.plot_width/2-font_offset, self.plot_height-25),s)
+        legend_distance = self.plot_width - self.offsetx*2
+        legend_section = legend_distance/10
         for i in range(len(self.color_map)):
             painter.setPen(self.color_map[i])
             painter.setBrush(self.color_map[i])
-            painter.drawRect(self.plot_width/2 - self.xrange/2 - self.offsetx*2 +(i+1)*self.xrange/10, self.plot_height-90,self.xrange/10,20)
+            painter.drawRect(self.plot_width/2 - legend_distance/2 +(i)*legend_section, self.plot_height-90,legend_section,20)
             painter.setPen(QtGui.Qt.white)
-            painter.drawText(QtCore.QPointF(self.plot_width/2 - self.xrange/2 - self.offsetx*2 +(i+1)*self.xrange/10+self.xrange/10-10,self.plot_height-50), f"{round(self.step_map[i+1],2)}")
+            painter.drawText(QtCore.QPointF(self.plot_width/2 -legend_distance/2 +(i)*legend_section-10,self.plot_height-50), f"{round(self.step_map[i],2)}")
+        painter.drawText(QtCore.QPointF(self.plot_width/2 -legend_distance/2 +(10)*legend_section-10,self.plot_height-50), f"{round(self.step_map[10],2)}")
             
         painter.end()
         self.label.setPixmap(canvas)
@@ -453,11 +492,12 @@ class LuxPlotter(QtWidgets.QWidget):
                     pen = QtGui.QPen(self.color_map[9],pixel_size)
                 else:
                     pen = QtGui.QPen(QtCore.Qt.white,pixel_size)
-                painter.setPen(pen)
-                if plot_type =="wall":
-                    painter.drawPoint(x*2+self.offsetx+self.xrange*2, self.plot_height-self.offsety*2-y*2)
-                else:
-                    painter.drawPoint(x*2+self.offsetx+self.xrange, self.plot_height-self.offsety-y*2)
+                if lux_item[2]>=self.step_map[0]:
+                    painter.setPen(pen)
+                    if plot_type =="wall":
+                        painter.drawPoint(x*2+self.offsetx+self.xrange*2, self.plot_height-self.offsety*2-y*2)
+                    else:
+                        painter.drawPoint(x*2+self.offsetx+self.xrange, self.plot_height-self.offsety-y*2)
                 
     # def drawByGradient(self,painter):
     #     pixel_size = increments * 2
