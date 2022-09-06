@@ -430,13 +430,20 @@ class LuxPlotter(QtWidgets.QWidget):
         #football field overlay
         pen = QtGui.QPen(QtCore.Qt.green,5)
         painter.setPen(pen)
-        #yaxis
+        #length wise field
         for i in range(self.xrange*2+1):
             if (i-self.xrange-160)%320==0:
                 painter.drawLine(self.offsetx+i,self.plot_height-self.offsety,self.offsetx+i,50)
         for i in range(self.yrange*2+1):
             if i%(720)==0:
                 painter.drawLine(self.plot_width-self.offsetx,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
+        #width wise field
+        # for i in range(self.xrange*2+1):
+        #     if (i-self.xrange-360)%720==0:
+        #         painter.drawLine(self.offsetx+i,self.plot_height-self.offsety,self.offsetx+i,50)
+        # for i in range(self.yrange*2+1):
+        #     if i%(320)==0:
+        #         painter.drawLine(self.plot_width-self.offsetx,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
 
         #draw title
         font_metric = QtGui.QFontMetrics(painter.font())
