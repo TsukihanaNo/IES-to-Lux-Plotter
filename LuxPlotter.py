@@ -2,7 +2,7 @@ import os, sys
 import math, time
 from PySide6 import QtCore, QtGui, QtWidgets
 
-f_path = "flood_values_tweaked.csv"
+f_path = "raw_values.csv"
 
 y_axis_list = []
 
@@ -14,14 +14,14 @@ with open(f_path) as f:
         y_axis_list.append(line.split(","))
         
 #rotate grid
-# temp_list_2 = []
-# for i in range(len(y_axis_list[0])):
-#     temp_list = []
-#     for j in range(len(y_axis_list)):
-#         temp_list.append(y_axis_list[j][i])
-#     temp_list_2.append(temp_list)
+temp_list_2 = []
+for i in range(len(y_axis_list[0])):
+    temp_list = []
+    for j in range(len(y_axis_list)):
+        temp_list.append(y_axis_list[j][i])
+    temp_list_2.append(temp_list)
     
-# y_axis_list = temp_list_2
+y_axis_list = temp_list_2
 
 candela_to_lux_modifier = 10.76391 #10.76391for feet only, not required for meters
 
@@ -59,13 +59,13 @@ class LuxPlotter(QtWidgets.QWidget):
         y_tilt = 0
         x_distance = 800  #distance out
         z_distance = 300  #distance on the side
-        increments = 5
+        increments = 1
         starting_x_deg=-90
         starting_y_deg=90
         ending_x_deg=90
         ending_y_deg=-90
-        x_degrees_increment=15
-        y_degrees_increment=18
+        x_degrees_increment=2
+        y_degrees_increment=2
         
         plot_title = f"Ground Plot at {height} ft. with x tilt: {x_tilt} deg., y tilt: {y_tilt} deg."
         
@@ -75,7 +75,8 @@ class LuxPlotter(QtWidgets.QWidget):
         self.yrange = x_distance
         self.plot_width = self.xrange*2+100
         self.plot_height = self.yrange*2+200
-        projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
+        #projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
+        projection_list,max_lux = self.generatePlanePlot(0,"y",90, 2,z_distance,x_distance, 1)
         
         #wall plot
         # wall_distance = 100
@@ -141,10 +142,36 @@ class LuxPlotter(QtWidgets.QWidget):
         self.setWindowTitle('Lux Plotter')
         self.show()
         
-    def getInterpolatedCandela(self,theta_x,starting_x_deg,x_degrees_increment,theta_y,starting_y_deg, y_degrees_increment,x_element_count,y_element_count,increments):
-        # x_th_1, x_th_2 = 0, 0
-        # y_th_1, y_th_2 = 0, 0
+    def getInterpolatedCandela1D(self,theta,starting_degree,degrees_increment,axis):
+        if starting_degree<0:
+            degrees_increment = -1*degrees_increment
+        element_1 = math.ceil((starting_degree-theta)/degrees_increment)
         
+        if theta % degrees_increment!=0:
+            element_2 = element_1 -1
+        else:
+            element_2 = element_1
+            
+        theta_diff = theta- (starting_degree-element_1*degrees_increment) 
+        if axis  =="y":
+            origin = int((len(y_axis_list[0])-1)/2)
+            c_diff = float(y_axis_list[element_1][origin])-float(y_axis_list[element_2][origin])
+            c_increment = c_diff/abs(degrees_increment)
+            candela = float(y_axis_list[element_1][origin]) - (c_increment * theta_diff)
+            #print(theta,starting_degree-element_1*degrees_increment,"c1",y_axis_list[element_1][origin],starting_degree-element_2*degrees_increment,"c2",y_axis_list[element_2][origin],"theta diff",theta_diff,"c_diff",c_diff,"c_incre",c_increment,"c",candela)
+
+        else:
+            origin = int((len(y_axis_list)-1)/2)
+            #print(origin,element_1,element_2)
+            c_diff = float(y_axis_list[origin][element_1])-float(y_axis_list[origin][element_2])
+            c_increment = c_diff/abs(degrees_increment)
+            candela = float(y_axis_list[origin][element_1]) + (c_increment * theta_diff)
+            #print(theta,starting_degree-element_1*degrees_increment,"c1",y_axis_list[origin][element_1],starting_degree-element_2*degrees_increment,"c2",y_axis_list[origin][element_2],"theta diff",theta_diff,"c_diff",c_diff,"c_incre",c_increment,"c",candela)
+        return candela
+    
+    
+    def getInterpolatedCandela2D(self,theta_x,starting_x_deg,x_degrees_increment,theta_y,starting_y_deg, y_degrees_increment):
+        #bidirectional interpolation
         #finding x
         if starting_x_deg<0:
             x_degrees_increment = -1*x_degrees_increment
@@ -163,49 +190,6 @@ class LuxPlotter(QtWidgets.QWidget):
         else:
             y_th_2 = y_th_1
         
-        # print("theta x",theta_x,x_th_1,starting_x_deg-x_th_1*x_degrees_increment,x_th_2,starting_x_deg-x_th_2*x_degrees_increment,"theta y",theta_y,y_th_1,starting_y_deg-y_th_1*y_degrees_increment,y_th_2,starting_y_deg-y_th_2*y_degrees_increment)
-        
-        # for xth in range(x_element_count):
-        #     angle = starting_x_deg + xth*x_degrees_increment
-        #     #print(angle)
-        #     #print(angle)
-        #     if theta_x==angle:
-        #         x_th_1 = xth
-        #         x_th_2 = xth
-        #         break
-        #     if theta_x < 0:
-        #         if theta_x < angle and angle<=0:
-        #             x_th_1 = xth
-        #             x_th_2 = xth-1
-        #             #print("x - negative",angle,theta_x, -45+x_th_1*15,-45+x_th_2*15)
-        #             break
-        #     else:
-        #         if theta_x <= angle and angle>=0:
-        #             x_th_1 = xth
-        #             x_th_2 = xth-1
-        #             #print("x - positive",angle,theta_x,-45+x_th_1*15,-45+x_th_2*15)
-        #             break
-        # for yth in range(y_element_count):
-        #     angle = starting_y_deg - yth*y_degrees_increment
-        #     #print(angle)
-        #     if theta_y==angle:
-        #         y_th_1 = yth
-        #         y_th_2 = yth
-        #         break
-        #     if theta_y < 0:
-        #         if theta_y > angle and angle<=0:
-        #             y_th_1 = yth
-        #             y_th_2 = yth-1
-        #             #print("y - negative",angle,theta_y, 45-y_th_1*15,45-y_th_2*15)
-        #             break
-        #     else:
-        #         if theta_y >= angle and angle>=0:
-        #             y_th_1 = yth
-        #             y_th_2 = yth-1
-        #             #print("y - positive",angle,theta_y,-90+y_th*2)
-        #             break
-        
-        #averaged linear interpolation
         #interpolating by x axis
         c_x_increment_1 = float(y_axis_list[y_th_1][x_th_1])-float(y_axis_list[y_th_1][x_th_2])
         c_x_increment_2 = float(y_axis_list[y_th_2][x_th_1])-float(y_axis_list[y_th_2][x_th_2])
@@ -238,6 +222,27 @@ class LuxPlotter(QtWidgets.QWidget):
         #print("calc thetas",theta_x, theta_y,"list theta x,x2",(starting_x_deg+x_th_1*degrees_increment), (starting_x_deg+x_th_2*degrees_increment),"list theta y,y2",(starting_y_deg-y_th_1*degrees_increment), (starting_y_deg-y_th_2*degrees_increment),"dif data x,y",x_dif, y_dif, c_x_increment_1,c_x_increment_2,"x candela", c_x_1, c_x_2,"final candela",c_y,"set 1", y_axis_list[y_th_1][x_th_1], y_axis_list[y_th_1][x_th_2],"set 2", y_axis_list[y_th_2][x_th_1], y_axis_list[y_th_2][x_th_2])
         return c_y
     
+    def generatePlanePlot(self,slice_angle,plane_axis,starting_degree, degrees_increment,x_distance, y_distance, increments):
+        x_range = int(x_distance/increments)*2
+        y_range = int(y_distance/increments)
+        projection_list = []
+        max_lux = 0
+        for y in range(1,y_range+1):
+            y = y*increments
+            for x in range (x_range):
+                x = -x_distance+x*increments
+                theta = math.degrees(math.atan(x/y))
+                candela = self.getInterpolatedCandela1D(theta,starting_degree,degrees_increment,plane_axis)
+                d = math.sqrt((x**2)+(y**2))
+                lux = (float(candela)*candela_to_lux_modifier)/(d**2)
+                if x == 0 and y%25==0:
+                    print(candela,d,lux)
+                if lux > max_lux:
+                    max_lux = lux 
+                projection_list.append((x,y,lux))
+        print(max_lux)
+        return projection_list,max_lux
+    
     def generateGroundPlot(self,height,y_tilt,x_tilt,increments,x_distance,z_distance,starting_x_deg,starting_y_deg,ending_x_deg,ending_y_deg,x_degrees_increment,y_degrees_increment):
         x_range = int(x_distance/increments)
         z_range = int(z_distance/increments)*2
@@ -252,10 +257,15 @@ class LuxPlotter(QtWidgets.QWidget):
                 theta_x = math.degrees(math.atan(z/x))-x_tilt
                 theta_y = -90+math.degrees(math.atan(x/height))-y_tilt
                 # if theta_y >= ending_y_deg and theta_x >= starting_x_deg and theta_x <= ending_x_deg:
-                candela = self.getInterpolatedCandela(theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment,x_element_count,y_element_count,increments)
+                candela = self.getInterpolatedCandela2D(theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment)
                 # candela = y_axis_list[y_th_1][x_th_1]
                 d = math.sqrt((height**2)+(x**2)+(z**2))
                 lux = (float(candela)*candela_to_lux_modifier)/(d**2)
+                
+                #adjusting for plane
+                # angle_incident = math.acos(height/d)
+                # lux = lux * math.cos(angle_incident)
+                
                 if lux > max_lux:
                     max_lux = lux 
                 # if z ==0 and x%25==0:
@@ -280,10 +290,15 @@ class LuxPlotter(QtWidgets.QWidget):
                 theta_y = math.degrees(math.atan(y/wall_distance))-y_tilt
                 
                 # if theta_y<= starting_y_deg and theta_y >= ending_y_deg and theta_x >= starting_x_deg and theta_x <= ending_x_deg:
-                candela = self.getInterpolatedCandela(theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment,x_element_count,y_element_count,increments)
+                candela = self.getInterpolatedCandela2D(theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment)
                 # candela = y_axis_list[y_th_1][x_th_1]
                 d = math.sqrt((wall_distance**2)+(x**2)+(y**2))
                 lux = (float(candela)*candela_to_lux_modifier)/(d**2)
+                
+                #adjusting for plane
+                # angle_incident = math.acos(wall_distance/d)
+                # lux = lux * math.cos(angle_incident)
+                
                 if lux > max_lux:
                     max_lux = lux 
                 #if x ==0 and y%10==0:

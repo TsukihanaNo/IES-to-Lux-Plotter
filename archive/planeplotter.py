@@ -2,7 +2,7 @@ import os, sys
 import math
 from PySide6 import QtCore, QtGui, QtWidgets
 
-f_path = "flood_values.csv"
+f_path = "raw_values.csv"
 
 y_axis_list = []
 
@@ -14,15 +14,15 @@ with open(f_path) as f:
 x_lux_list = []
 
 
-# temp_list_2 = []
-# #rotate grid
-# for i in range(len(y_axis_list[0])):
-#     temp_list = []
-#     for j in range(len(y_axis_list)):
-#         temp_list.append(y_axis_list[j][i])
-#     temp_list_2.append(temp_list)
+temp_list_2 = []
+#rotate grid
+for i in range(len(y_axis_list[0])):
+    temp_list = []
+    for j in range(len(y_axis_list)):
+        temp_list.append(y_axis_list[j][i])
+    temp_list_2.append(temp_list)
     
-# y_axis_list = temp_list_2
+y_axis_list = temp_list_2
 
 #settings
 increments = 1
