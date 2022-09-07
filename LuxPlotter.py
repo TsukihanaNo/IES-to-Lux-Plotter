@@ -2,7 +2,7 @@ import os, sys
 import math, time
 from PySide6 import QtCore, QtGui, QtWidgets
 
-f_path = "raw_values.csv"
+f_path = "both_values_tweaked.csv"
 
 y_axis_list = []
 
@@ -14,14 +14,14 @@ with open(f_path) as f:
         y_axis_list.append(line.split(","))
         
 #rotate grid
-temp_list_2 = []
-for i in range(len(y_axis_list[0])):
-    temp_list = []
-    for j in range(len(y_axis_list)):
-        temp_list.append(y_axis_list[j][i])
-    temp_list_2.append(temp_list)
+# temp_list_2 = []
+# for i in range(len(y_axis_list[0])):
+#     temp_list = []
+#     for j in range(len(y_axis_list)):
+#         temp_list.append(y_axis_list[j][i])
+#     temp_list_2.append(temp_list)
     
-y_axis_list = temp_list_2
+# y_axis_list = temp_list_2
 
 candela_to_lux_modifier = 10.76391 #10.76391for feet only, not required for meters
 
@@ -44,28 +44,33 @@ class LuxPlotter(QtWidgets.QWidget):
         self.button_zoom_out.clicked.connect(self.ZoomOut)
         self.button_save = QtWidgets.QPushButton("Save")
         self.button_save.clicked.connect(self.save)
+        self.button_export = QtWidgets.QPushButton("Export CSV")
+        self.button_export.clicked.connect(self.exportCSV)
         layout_buttons.addWidget(self.button_zoom_out)
         layout_buttons.addWidget(self.button_fit)
         layout_buttons.addWidget(self.button_zoom_in)
         layout_buttons.addWidget(self.button_save)
+        layout_buttons.addWidget(self.button_export)
         #self.renderer = RenderGroundProjection(self)
         
         self.label = QtWidgets.QLabel()
         self.label.setScaledContents(True)
         
+        self.light_count = 1
+        
         #ground plot
         height = 8
         x_tilt = 0
         y_tilt = 0
-        x_distance = 800  #distance out
-        z_distance = 300  #distance on the side
+        x_distance = 400  #distance out
+        z_distance = 250  #distance on the side
         increments = 1
         starting_x_deg=-90
         starting_y_deg=90
         ending_x_deg=90
         ending_y_deg=-90
-        x_degrees_increment=2
-        y_degrees_increment=2
+        x_degrees_increment=15
+        y_degrees_increment=18
         
         plot_title = f"Ground Plot at {height} ft. with x tilt: {x_tilt} deg., y tilt: {y_tilt} deg."
         
@@ -75,8 +80,8 @@ class LuxPlotter(QtWidgets.QWidget):
         self.yrange = x_distance
         self.plot_width = self.xrange*2+100
         self.plot_height = self.yrange*2+200
-        #projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
-        projection_list,max_lux = self.generatePlanePlot(0,"y",90, 2,z_distance,x_distance, 1)
+        self.projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
+        #projection_list,max_lux = self.generatePlanePlot(0,"y",90, 2,z_distance,x_distance, 1)
         
         #wall plot
         # wall_distance = 100
@@ -126,7 +131,7 @@ class LuxPlotter(QtWidgets.QWidget):
         #     self.save(f"ground_plot_angle_{y_tilt}.png")
         #     print("saved")
         start = time.time()
-        self.GroundPlot(projection_list,increments,plot_title)
+        self.GroundPlot(self.projection_list,increments,plot_title)
         end = time.time()
         print(end-start)
         self.FitToWindow()
@@ -262,6 +267,8 @@ class LuxPlotter(QtWidgets.QWidget):
                 d = math.sqrt((height**2)+(x**2)+(z**2))
                 lux = (float(candela)*candela_to_lux_modifier)/(d**2)
                 
+                #adjusting for light count
+                lux = lux * self.light_count
                 #adjusting for plane
                 # angle_incident = math.acos(height/d)
                 # lux = lux * math.cos(angle_incident)
@@ -299,6 +306,9 @@ class LuxPlotter(QtWidgets.QWidget):
                 # angle_incident = math.acos(wall_distance/d)
                 # lux = lux * math.cos(angle_incident)
                 
+                #adjusting for light count
+                lux = lux * self.light_count
+                
                 if lux > max_lux:
                     max_lux = lux 
                 #if x ==0 and y%10==0:
@@ -330,7 +340,58 @@ class LuxPlotter(QtWidgets.QWidget):
             self.dispMsg(f"Error Occured while saving.\n Error: {e}")
             
     def save(self,filename):
-        self.label.pixmap().save(filename,"PNG",100)
+        self.label.pixmap().save("test.png","PNG",100)
+        
+    def exportCSV(self,filename):
+        print("starting export")
+        increment = 2
+        starting_x  = -(self.xrange/2)
+        starting_y = self.yrange
+        y_range = int(self.yrange/increment)
+        x_range = int(self.xrange/increment)
+        export_list = []
+        x_temp_list = ["",]
+        for x in range(x_range):
+            x = starting_x+x*increment
+            x_temp_list.append(str(x))
+        export_list.append(x_temp_list)
+        # for y in range(self.yrange):
+        #     y = y*increment
+        #     x_temp_list = []
+        #     x_temp_list.append(str(y))
+        #     for x in range(self.xrange):
+        #         x = starting_x+x*increment
+        #         lux = 0
+        #         for data in self.projection_list:
+        #             if x==data[0] and y==data[1]:
+        #                 lux = data[2]
+        #                 break
+        #         x_temp_list.append(str(lux))
+        #     export_list.append(x_temp_list)
+        x_size = self.xrange/increment
+        for y in range(1,y_range+1):
+            y = y*increment
+            start = (y-1)*x_size*increment
+            x_temp_list = []
+            x_temp_list.append(str(y))
+            for x in range(x_range):
+                x_counter = x*increment
+                x = starting_x+x*increment
+                element = int(start + x_counter)
+                lux = self.projection_list[element][2]
+                #print(x,y,lux,element,start,x_counter,self.projection_list[element])
+                x_temp_list.append(str(lux))
+            export_list.append(x_temp_list)
+        print("saving data")
+        f = open("export_data.csv","w+")
+        for item in export_list:
+            s = ",".join(item)
+            s+="\n"
+            f.write(s)
+        f.close()
+        print("export complete")
+        
+                
         
     
     def WallPlot(self,projection_list,increments,plot_title):
