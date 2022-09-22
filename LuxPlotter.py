@@ -2,26 +2,32 @@ import os, sys
 import math, time
 from PySide6 import QtCore, QtGui, QtWidgets
 
-f_path = "raw_values.csv"
 
-y_axis_list = []
+f_path_list = ["flood_values_tweaked.csv","spot_values_tweaked.csv"]
+# f_path = "raw_values.csv"
 
-with open(f_path) as f:
-    for line in f:
-        if "ï»¿" in line:
-            line = line.strip("ï»¿")
-        line = line.strip("\n")
-        y_axis_list.append(line.split(","))
+data_set_list = []
+
+for f_path in f_path_list:
+    y_axis_list = []
+    with open(f_path) as f:
+        for line in f:
+            if "ï»¿" in line:
+                line = line.strip("ï»¿")
+            line = line.strip("\n")
+            y_axis_list.append(line.split(","))
+    data_set_list.append(y_axis_list)
         
 #rotate grid
-temp_list_2 = []
-for i in range(len(y_axis_list[0])):
-    temp_list = []
-    for j in range(len(y_axis_list)):
-        temp_list.append(y_axis_list[j][i])
-    temp_list_2.append(temp_list)
+# temp_list_2 = []
+# for i in range(len(y_axis_list[0])):
+#     temp_list = []
+#     for j in range(len(y_axis_list)):
+#         temp_list.append(y_axis_list[j][i])
+#     temp_list_2.append(temp_list)
     
-y_axis_list = temp_list_2
+# y_axis_list = temp_list_2
+
 
 candela_to_lux_modifier = 10.76391 #10.76391for feet only, not required for meters
 
@@ -64,8 +70,8 @@ class LuxPlotter(QtWidgets.QWidget):
         starting_y_deg=90
         ending_x_deg=90
         ending_y_deg=-90
-        x_degrees_increment=2
-        y_degrees_increment=2
+        x_degrees_increment=15
+        y_degrees_increment=18
         
         plot_title = f"Ground Plot at {height} ft. with x tilt: {x_tilt} deg., y tilt: {y_tilt} deg."
         
@@ -75,8 +81,8 @@ class LuxPlotter(QtWidgets.QWidget):
         self.yrange = x_distance
         self.plot_width = self.xrange*2+100
         self.plot_height = self.yrange*2+200
-        #projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
-        projection_list,max_lux = self.generatePlanePlot(0,"y",90, 2,z_distance,x_distance, 1)
+        projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
+        #projection_list,max_lux = self.generatePlanePlot(0,"y",90, 2,z_distance,x_distance, 1)
         
         #wall plot
         # wall_distance = 100
@@ -170,7 +176,7 @@ class LuxPlotter(QtWidgets.QWidget):
         return candela
     
     
-    def getInterpolatedCandela2D(self,theta_x,starting_x_deg,x_degrees_increment,theta_y,starting_y_deg, y_degrees_increment):
+    def getInterpolatedCandela2D(self,data_set,theta_x,starting_x_deg,x_degrees_increment,theta_y,starting_y_deg, y_degrees_increment):
         #bidirectional interpolation
         #finding x
         if starting_x_deg<0:
@@ -191,19 +197,19 @@ class LuxPlotter(QtWidgets.QWidget):
             y_th_2 = y_th_1
         
         #interpolating by x axis
-        c_x_increment_1 = float(y_axis_list[y_th_1][x_th_1])-float(y_axis_list[y_th_1][x_th_2])
-        c_x_increment_2 = float(y_axis_list[y_th_2][x_th_1])-float(y_axis_list[y_th_2][x_th_2])
+        c_x_increment_1 = float(data_set[y_th_1][x_th_1])-float(data_set[y_th_1][x_th_2])
+        c_x_increment_2 = float(data_set[y_th_2][x_th_1])-float(data_set[y_th_2][x_th_2])
         c_x_increment_1 = c_x_increment_1 / abs(x_degrees_increment)
         c_x_increment_2 = c_x_increment_2 / abs(x_degrees_increment)
         
         #x_dif = theta_x-(starting_x_deg+x_th_1*x_degrees_increment)
         x_dif = theta_x-(starting_x_deg-x_th_1*x_degrees_increment)
         if x_dif>0:
-            c_x_1 = float(y_axis_list[y_th_1][x_th_2]) + (x_dif * c_x_increment_1)
-            c_x_2 = float(y_axis_list[y_th_2][x_th_2]) + (x_dif * c_x_increment_2)
+            c_x_1 = float(data_set[y_th_1][x_th_2]) + (x_dif * c_x_increment_1)
+            c_x_2 = float(data_set[y_th_2][x_th_2]) + (x_dif * c_x_increment_2)
         else:
-            c_x_1 = float(y_axis_list[y_th_1][x_th_1]) + (x_dif  * c_x_increment_1)
-            c_x_2 = float(y_axis_list[y_th_2][x_th_1]) + (x_dif  * c_x_increment_2)
+            c_x_1 = float(data_set[y_th_1][x_th_1]) + (x_dif  * c_x_increment_1)
+            c_x_2 = float(data_set[y_th_2][x_th_1]) + (x_dif  * c_x_increment_2)
         
         c_y_increment = c_x_2 - c_x_1
         c_y_increment = c_y_increment / y_degrees_increment
@@ -257,10 +263,13 @@ class LuxPlotter(QtWidgets.QWidget):
                 theta_x = math.degrees(math.atan(z/x))-x_tilt
                 theta_y = -90+math.degrees(math.atan(x/height))-y_tilt
                 # if theta_y >= ending_y_deg and theta_x >= starting_x_deg and theta_x <= ending_x_deg:
-                candela = self.getInterpolatedCandela2D(theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment)
+                candela_1 = self.getInterpolatedCandela2D(data_set_list[0],theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment)
+                candela_2 = self.getInterpolatedCandela2D(data_set_list[1],theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment)
                 # candela = y_axis_list[y_th_1][x_th_1]
                 d = math.sqrt((height**2)+(x**2)+(z**2))
-                lux = (float(candela)*candela_to_lux_modifier)/(d**2)
+                lux_1 = (float(candela_1)*candela_to_lux_modifier)/(d**2)
+                lux_2 = (float(candela_2)*candela_to_lux_modifier)/(d**2)
+                lux = lux_1 * 0.7 + lux_2 * .3
                 
                 #adjusting for plane
                 # angle_incident = math.acos(height/d)
