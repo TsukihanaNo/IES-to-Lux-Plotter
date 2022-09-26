@@ -3,7 +3,8 @@ import math, time
 from PySide6 import QtCore, QtGui, QtWidgets
 
 
-f_path_list = ["flood_values_tweaked.csv","spot_values_tweaked.csv"]
+f_path_list = ["flood_new.csv","spot_narrow_cone.csv"]
+# f_path_list = ["flood_values_tweaked.csv","spot_values_tweaked.csv"]
 # f_path = "raw_values.csv"
 
 data_set_list = []
@@ -27,6 +28,8 @@ for f_path in f_path_list:
 #     temp_list_2.append(temp_list)
     
 # y_axis_list = temp_list_2
+
+
 
 
 candela_to_lux_modifier = 10.76391 #10.76391for feet only, not required for meters
@@ -65,18 +68,18 @@ class LuxPlotter(QtWidgets.QWidget):
         self.light_count = 1
         
         #ground plot
-        height = 8
+        height = 20
         x_tilt = 0
-        y_tilt = 0
-        x_distance = 400  #distance out
-        z_distance = 250  #distance on the side
+        y_tilt = -10
+        x_distance = 600  #distance out
+        z_distance = 300  #distance on the side
         increments = 1
         starting_x_deg=-90
         starting_y_deg=90
         ending_x_deg=90
         ending_y_deg=-90
         x_degrees_increment=15
-        y_degrees_increment=18
+        y_degrees_increment=9
         
         plot_title = f"Ground Plot at {height} ft. with x tilt: {x_tilt} deg., y tilt: {y_tilt} deg."
         
@@ -86,7 +89,7 @@ class LuxPlotter(QtWidgets.QWidget):
         self.yrange = x_distance
         self.plot_width = self.xrange*2+100
         self.plot_height = self.yrange*2+200
-        projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
+        self.projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
         #projection_list,max_lux = self.generatePlanePlot(0,"y",90, 2,z_distance,x_distance, 1)
         
         #wall plot
@@ -274,7 +277,7 @@ class LuxPlotter(QtWidgets.QWidget):
                 d = math.sqrt((height**2)+(x**2)+(z**2))
                 lux_1 = (float(candela_1)*candela_to_lux_modifier)/(d**2)
                 lux_2 = (float(candela_2)*candela_to_lux_modifier)/(d**2)
-                lux = lux_1 * 0.7 + lux_2 * .3
+                lux = lux_1 * 0 + lux_2 * 1
                 
                 #adjusting for light count
                 lux = lux * self.light_count
