@@ -38,6 +38,7 @@ class LuxPlotter(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.color_map = [QtGui.QColor(45,49,139),QtGui.QColor(5,80,164),QtGui.QColor(11,111,186),QtGui.QColor(29,135,199),QtGui.QColor(37,159,218),QtGui.QColor(0,176,187),QtGui.QColor(105,191,100),QtGui.QColor(168,209,56),QtGui.QColor(246,130,33),QtGui.QColor(228,36,42)]
+        #self.color_map = [QtGui.QColor("#6A4C93"),QtGui.QColor("#565AA0"),QtGui.QColor("#4267AC"),QtGui.QColor("#1982C4"),QtGui.QColor("#36949D"),QtGui.QColor("#8AC926"),QtGui.QColor("#C5CA30"),QtGui.QColor("#FFCA3A"),QtGui.QColor("#FF924C"),QtGui.QColor("#FF595E")]
         self.window_height=900
         self.window_width=900
         self.setGeometry(0, 0, self.window_width, self.window_height)
@@ -68,9 +69,9 @@ class LuxPlotter(QtWidgets.QWidget):
         self.light_count = 1
         
         #ground plot
-        height = 20
+        height = 30
         x_tilt = 0
-        y_tilt = -10
+        y_tilt = -30
         x_distance = 600  #distance out
         z_distance = 300  #distance on the side
         increments = 1
@@ -140,7 +141,7 @@ class LuxPlotter(QtWidgets.QWidget):
         #     self.save(f"ground_plot_angle_{y_tilt}.png")
         #     print("saved")
         start = time.time()
-        self.GroundPlot(self.projection_list,increments,plot_title)
+        self.GroundPlot(self.projection_list,increments,plot_title,max_lux)
         end = time.time()
         print(end-start)
         self.FitToWindow()
@@ -277,7 +278,7 @@ class LuxPlotter(QtWidgets.QWidget):
                 d = math.sqrt((height**2)+(x**2)+(z**2))
                 lux_1 = (float(candela_1)*candela_to_lux_modifier)/(d**2)
                 lux_2 = (float(candela_2)*candela_to_lux_modifier)/(d**2)
-                lux = lux_1 * 0 + lux_2 * 1
+                lux = lux_1 * 1 + lux_2 * 0
                 
                 #adjusting for light count
                 lux = lux * self.light_count
@@ -471,11 +472,12 @@ class LuxPlotter(QtWidgets.QWidget):
         self.label.setPixmap(canvas)
             
         
-    def GroundPlot(self,projection_list,increments,plot_title):
+    def GroundPlot(self,projection_list,increments,plot_title,max_lux):
         canvas = self.label.pixmap()
         painter = QtGui.QPainter(canvas)
         #painter.scale(self.scale, self.scale)
-        self.drawBySolid(painter,"ground",projection_list,increments)
+        #self.drawBySolid(painter,"ground",projection_list,increments)
+        self.drawByGradient(painter,"ground",projection_list,increments,max_lux)
         pen = QtGui.QPen(QtCore.Qt.white,2)
         painter.setPen(pen)
         #+y
@@ -594,28 +596,31 @@ class LuxPlotter(QtWidgets.QWidget):
                     else:
                         painter.drawPoint(x*2+self.offsetx+self.xrange, self.plot_height-self.offsety-y*2)
                 
-    # def drawByGradient(self,painter):
-    #     pixel_size = increments * 2
-    #     for lux_item in projection_list:
-    #         # x = x * increments
-    #         x = lux_item[0]
-    #         y = lux_item[1]
-    #         #lux = lux_item[2]
-    #         if y < self.yrange and y > -self.yrange and x<self.xrange and x>-self.xrange:
-    #             if lux_item[2]>self.step_0 and lux_item[2] <= self.step_1:
-    #                 pen = QtGui.QPen(QtGui.QColor(0,0,int((lux_item[2]/10)*255)),pixel_size)
-    #             elif lux_item[2] >self.step_1 and lux_item[2] <= self.step_2:
-    #                 pen = QtGui.QPen(QtGui.QColor(0,int((lux_item[2]/25)*255),0),pixel_size)
-    #             elif lux_item[2] >self.step_2 and lux_item[2] <= self.step_3:
-    #                 pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/50)*10),0),pixel_size)
-    #             elif lux_item[2] >self.step_3 and lux_item[2] <= self.step_4:
-    #                 pen = QtGui.QPen(QtGui.QColor(255,255-int(((lux_item[2])/100)*165),0),pixel_size)
-    #             elif lux_item[2] >self.step_4 and lux_item[2] <= self.step_5:
-    #                 pen = QtGui.QPen(QtGui.QColor(255,150-int(((lux_item[2])/200)*150),0),pixel_size)
-    #             else:
-    #                 pen = QtGui.QPen(QtCore.Qt.white,pixel_size)
-    #             painter.setPen(pen)
-    #             painter.drawPoint(x*2+self.offsetx+self.xrange, self.plot_height-self.offsety-y*2)
+    def drawByGradient(self,painter,plot_type,projection_list,increments,max_lux):
+        pixel_size = increments * 2
+        for lux_item in projection_list:
+            # x = x * increments
+            x = lux_item[0]
+            y = lux_item[1]
+            #lux = lux_item[2]
+            if y < self.yrange and y > -self.yrange and x<self.xrange and x>-self.xrange:
+                rgb_value = lux_item[2] * (1024/max_lux)
+                if rgb_value<=256:
+                    pen = QtGui.QPen(QtGui.QColor(0,rgb_value,255),pixel_size)
+                elif rgb_value>256 and rgb_value<=512:
+                    pen = QtGui.QPen(QtGui.QColor(0,255,512-rgb_value),pixel_size)
+                elif rgb_value>256 and rgb_value<=512:
+                    pen = QtGui.QPen(QtGui.QColor(0,255,512-rgb_value),pixel_size)
+                elif rgb_value>512 and rgb_value<=756:
+                    pen = QtGui.QPen(QtGui.QColor(rgb_value-512,255,0),pixel_size)
+                else:
+                    pen = QtGui.QPen(QtGui.QColor(255,rgb_value-756,0),pixel_size)
+                if lux_item[2]>=self.step_map[0]:
+                    painter.setPen(pen)
+                    if plot_type =="wall":
+                        painter.drawPoint(x*2+self.offsetx+self.xrange*2, self.plot_height-self.offsety*2-y*2)
+                    else:
+                        painter.drawPoint(x*2+self.offsetx+self.xrange, self.plot_height-self.offsety-y*2)
         
     def center(self):
         window = self.window()
