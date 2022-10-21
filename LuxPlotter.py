@@ -3,8 +3,8 @@ import math, time
 from PySide6 import QtCore, QtGui, QtWidgets
 
 
-f_path_list = ["flood_new.csv","spot_narrow_cone.csv"]
-# f_path_list = ["flood_values_tweaked.csv","spot_values_tweaked.csv"]
+f_path_list = ["flood_new.csv","port_spot.csv"]
+#f_path_list = ["flood_values_tweaked.csv","spot_values_tweaked.csv"]
 # f_path = "raw_values.csv"
 
 data_set_list = []
@@ -53,7 +53,7 @@ class LuxPlotter(QtWidgets.QWidget):
         self.button_zoom_out = QtWidgets.QPushButton("Zoom Out")
         self.button_zoom_out.clicked.connect(self.ZoomOut)
         self.button_save = QtWidgets.QPushButton("Save")
-        self.button_save.clicked.connect(self.save)
+        self.button_save.clicked.connect(self.saveFile)
         self.button_export = QtWidgets.QPushButton("Export CSV")
         self.button_export.clicked.connect(self.exportCSV)
         layout_buttons.addWidget(self.button_zoom_out)
@@ -69,18 +69,18 @@ class LuxPlotter(QtWidgets.QWidget):
         self.light_count = 1
         
         #ground plot
-        height = 30
+        height = 8
         x_tilt = 0
-        y_tilt = -30
-        x_distance = 600  #distance out
+        y_tilt = 0
+        x_distance = 1200  #distance out
         z_distance = 300  #distance on the side
         increments = 1
         starting_x_deg=-90
         starting_y_deg=90
         ending_x_deg=90
         ending_y_deg=-90
-        x_degrees_increment=15
-        y_degrees_increment=9
+        x_degrees_increment=5
+        y_degrees_increment=5
         
         plot_title = f"Ground Plot at {height} ft. with x tilt: {x_tilt} deg., y tilt: {y_tilt} deg."
         
@@ -94,7 +94,7 @@ class LuxPlotter(QtWidgets.QWidget):
         #projection_list,max_lux = self.generatePlanePlot(0,"y",90, 2,z_distance,x_distance, 1)
         
         #wall plot
-        # wall_distance = 100
+        # wall_distance = 500
         # x_tilt = 0
         # y_tilt = 0
         # x_distance = 300 #must be in increments of 25
@@ -104,8 +104,8 @@ class LuxPlotter(QtWidgets.QWidget):
         # starting_y_deg=90
         # ending_x_deg=90
         # ending_y_deg=-90
-        # x_degrees_increment=15
-        # y_degrees_increment=18
+        # x_degrees_increment=5
+        # y_degrees_increment=5
         # self.offsetx = 50
         # self.offsety = y_distance+75
         # self.xrange = x_distance
@@ -113,7 +113,7 @@ class LuxPlotter(QtWidgets.QWidget):
         # self.plot_width = self.xrange*4+100
         # self.plot_height = self.yrange*4+200
         # plot_title = f"Wall Plot at {wall_distance} from the source with x tilt: {x_tilt}, y tilt: {y_tilt}"
-        # projection_list,max_lux = self.generateWallPlot(wall_distance, y_tilt, x_tilt, increments, x_distance, y_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg, x_degrees_increment, y_degrees_increment)
+        #self.projection_list,max_lux = self.generateWallPlot(wall_distance,y_tilt,x_tilt,increments,x_distance,y_distance,starting_x_deg,starting_y_deg,ending_x_deg,ending_y_deg,x_degrees_increment,y_degrees_increment)
         
         
         
@@ -140,8 +140,21 @@ class LuxPlotter(QtWidgets.QWidget):
         #     self.GroundPlot(projection_list,increments,plot_title)
         #     self.save(f"ground_plot_angle_{y_tilt}.png")
         #     print("saved")
+        
+        #wall plot images
+        # for i in range(20):
+        #     canvas.fill(QtCore.Qt.gray)
+        #     self.label.setPixmap(canvas)
+        #     wall_distance = (i +1)*50
+        #     self.projection_list,max_lux = self.generateWallPlot(wall_distance,y_tilt,x_tilt,increments,x_distance,y_distance,starting_x_deg,starting_y_deg,ending_x_deg,ending_y_deg,x_degrees_increment,y_degrees_increment)
+        #     print("rendering")
+        #     self.WallPlot(self.projection_list,increments,plot_title,max_lux)
+        #     self.save(f"wall pot_{wall_distance}.png")
+        #     print("saved")
+        
         start = time.time()
         self.GroundPlot(self.projection_list,increments,plot_title,max_lux)
+        #self.WallPlot(self.projection_list,increments,plot_title,max_lux)
         end = time.time()
         print(end-start)
         self.FitToWindow()
@@ -272,14 +285,14 @@ class LuxPlotter(QtWidgets.QWidget):
                 theta_x = math.degrees(math.atan(z/x))-x_tilt
                 theta_y = -90+math.degrees(math.atan(x/height))-y_tilt
                 # if theta_y >= ending_y_deg and theta_x >= starting_x_deg and theta_x <= ending_x_deg:
-                candela_1 = self.getInterpolatedCandela2D(data_set_list[0],theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment)
+                #candela_1 = self.getInterpolatedCandela2D(data_set_list[0],theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment)
                 candela_2 = self.getInterpolatedCandela2D(data_set_list[1],theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment)
                 # candela = y_axis_list[y_th_1][x_th_1]
                 d = math.sqrt((height**2)+(x**2)+(z**2))
-                lux_1 = (float(candela_1)*candela_to_lux_modifier)/(d**2)
+                #lux_1 = (float(candela_1)*candela_to_lux_modifier)/(d**2)
                 lux_2 = (float(candela_2)*candela_to_lux_modifier)/(d**2)
-                lux = lux_1 * 1 + lux_2 * 0
-                
+                #lux = lux_1 * 0 + lux_2 * 1
+                lux = lux_2 * 1
                 #adjusting for light count
                 lux = lux * self.light_count
                 #adjusting for plane
@@ -310,7 +323,7 @@ class LuxPlotter(QtWidgets.QWidget):
                 theta_y = math.degrees(math.atan(y/wall_distance))-y_tilt
                 
                 # if theta_y<= starting_y_deg and theta_y >= ending_y_deg and theta_x >= starting_x_deg and theta_x <= ending_x_deg:
-                candela = self.getInterpolatedCandela2D(theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment)
+                candela = self.getInterpolatedCandela2D(data_set_list[1],theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment)
                 # candela = y_axis_list[y_th_1][x_th_1]
                 d = math.sqrt((wall_distance**2)+(x**2)+(y**2))
                 lux = (float(candela)*candela_to_lux_modifier)/(d**2)
@@ -320,6 +333,7 @@ class LuxPlotter(QtWidgets.QWidget):
                 # lux = lux * math.cos(angle_incident)
                 
                 #adjusting for light count
+                lux = lux *1.45
                 lux = lux * self.light_count
                 
                 if lux > max_lux:
@@ -343,7 +357,7 @@ class LuxPlotter(QtWidgets.QWidget):
         self.scale_factor-=.1
         self.label.resize((self.scale_factor)*self.label.pixmap().size())
         
-    def save(self):
+    def saveFile(self):
         try:
             filename = QtWidgets.QFileDialog.getSaveFileName(self,("Save File"),"Plot_Output.png",".png")
             self.label.pixmap().save(filename[0],"PNG",100)
@@ -353,7 +367,7 @@ class LuxPlotter(QtWidgets.QWidget):
             self.dispMsg(f"Error Occured while saving.\n Error: {e}")
             
     def save(self,filename):
-        self.label.pixmap().save("test.png","PNG",100)
+        self.label.pixmap().save(filename,"PNG",100)
         
     def exportCSV(self,filename):
         print("starting export")
@@ -407,11 +421,12 @@ class LuxPlotter(QtWidgets.QWidget):
                 
         
     
-    def WallPlot(self,projection_list,increments,plot_title):
+    def WallPlot(self,projection_list,increments,plot_title,max_lux):
         canvas = self.label.pixmap()
         painter = QtGui.QPainter(canvas)
         #draw points
         self.drawBySolid(painter,"wall",projection_list,increments)
+        #self.drawByGradient(painter,"wall",projection_list,increments,max_lux)
 
         #draw axis
         pen = QtGui.QPen(QtCore.Qt.white,2)
@@ -476,8 +491,8 @@ class LuxPlotter(QtWidgets.QWidget):
         canvas = self.label.pixmap()
         painter = QtGui.QPainter(canvas)
         #painter.scale(self.scale, self.scale)
-        #self.drawBySolid(painter,"ground",projection_list,increments)
-        self.drawByGradient(painter,"ground",projection_list,increments,max_lux)
+        self.drawBySolid(painter,"ground",projection_list,increments)
+        #self.drawByGradient(painter,"ground",projection_list,increments,max_lux)
         pen = QtGui.QPen(QtCore.Qt.white,2)
         painter.setPen(pen)
         #+y
