@@ -3,23 +3,12 @@ import math, time
 from PySide6 import QtCore, QtGui, QtWidgets
 
 
-f_path_list = ["flood_values_tweaked.csv","port_spot.csv"]
+f_path_list = ["eco_sym_values_modified.csv","eco_asym_values.csv"]
+#f_path_list = ["flood_values_tweaked.csv","port_spot.csv"]
 #f_path_list = ["flood_values_tweaked.csv","spot_values_tweaked.csv"]
 # f_path = "raw_values.csv"
 
 data_set_list = []
-
-
-        
-#rotate grid
-# temp_list_2 = []
-# for i in range(len(y_axis_list[0])):
-#     temp_list = []
-#     for j in range(len(y_axis_list)):
-#         temp_list.append(y_axis_list[j][i])
-#     temp_list_2.append(temp_list)
-    
-# y_axis_list = temp_list_2
 
 class LightData:
     def __init__(self,data_set,x_increment=2,y_increment=2):
@@ -44,18 +33,28 @@ for f_path in f_path_list:
     light_data = LightData(y_axis_list)
     data_set_list.append(light_data)
     
-data_set_list[0].setXIncrement(15)
-data_set_list[0].setYIncrement(18)
+#rotate grid - need this for data sets from elite engineering
+temp_list_2 = []
+for i in range(len(data_set_list[0].data_set[0])):
+    temp_list = []
+    for j in range(len(data_set_list[0].data_set)):
+        temp_list.append(data_set_list[0].data_set[j][i])
+    temp_list_2.append(temp_list)
+     
+data_set_list[0].data_set = temp_list_2
+    
+data_set_list[0].setXIncrement(2)
+data_set_list[0].setYIncrement(2)
 
-data_set_list[1].setXIncrement(5)
-data_set_list[1].setYIncrement(5)
+data_set_list[1].setXIncrement(15)
+data_set_list[1].setYIncrement(15)
 
 candela_to_lux_modifier = 10.76391 #10.76391for feet only, not required for meters
 
 class LuxPlotter(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-        self.color_map = [QtGui.QColor(45,49,139),QtGui.QColor(5,80,164),QtGui.QColor(11,111,186),QtGui.QColor(29,135,199),QtGui.QColor(37,159,218),QtGui.QColor(0,176,187),QtGui.QColor(105,191,100),QtGui.QColor(168,209,56),QtGui.QColor(246,130,33),QtGui.QColor(228,36,42)]
+       
         #self.color_map = [QtGui.QColor("#6A4C93"),QtGui.QColor("#565AA0"),QtGui.QColor("#4267AC"),QtGui.QColor("#1982C4"),QtGui.QColor("#36949D"),QtGui.QColor("#8AC926"),QtGui.QColor("#C5CA30"),QtGui.QColor("#FFCA3A"),QtGui.QColor("#FF924C"),QtGui.QColor("#FF595E")]
         self.window_height=900
         self.window_width=900
@@ -86,35 +85,52 @@ class LuxPlotter(QtWidgets.QWidget):
         
         self.light_count = 1
         
+        #render methods
+        # 1 - binary increment of 10 steps with original color scheme
+        # 2 - distributed increment of 5 steps with brochure color scheme
+        self.font_size = 16
+
+        self.rendermethod = 2
+        
+        if self.rendermethod == 1:
+            #self.color_map = [QtGui.QColor(45,49,139),QtGui.QColor(65,185,85),QtGui.QColor(164,208,80),QtGui.QColor(238,233,74),QtGui.QColor(255,255,255)]
+            self.color_map = [QtGui.QColor(45,49,139),QtGui.QColor(5,80,164),QtGui.QColor(11,111,186),QtGui.QColor(29,135,199),QtGui.QColor(37,159,218),QtGui.QColor(0,176,187),QtGui.QColor(105,191,100),QtGui.QColor(168,209,56),QtGui.QColor(246,130,33),QtGui.QColor(228,36,42)]
+        else:
+            #self.color_map = [QtGui.QColor(45,49,139),QtGui.QColor(65,185,85),QtGui.QColor(164,208,80),QtGui.QColor(238,233,74),QtGui.QColor(255,255,255)]
+            self.color_map = [QtGui.QColor(35,44,99),QtGui.QColor(63,90,169),QtGui.QColor(42,81,39),QtGui.QColor(84,185,72),QtGui.QColor(189,215,72),QtGui.QColor(237,232,33),QtGui.QColor(252,240,102),QtGui.QColor(255,255,255)]
+
+        
         #ground plot
         height = 8
         x_tilt = 0
         y_tilt = 0
-        x_distance = 1200  #distance out
-        z_distance = 300  #distance on the side
+        x_distance = 425  #distance out
+        z_distance = 100  #distance on the side
         increments = 1
         starting_x_deg=-90
         starting_y_deg=90
         ending_x_deg=90
         ending_y_deg=-90
         
-        plot_title = f"Ground Plot at {height} ft. with x tilt: {x_tilt} deg., y tilt: {y_tilt} deg."
-        
-        self.offsetx =50
+        #plot_title = f"Radiant Eco Asymmetrical Lens - Ground Plot at {height} ft. with x tilt: {x_tilt} deg., y tilt: {y_tilt} deg."
+        plot_title = f"Radiant Eco Asymmetrical Lens - Ground Plot at {height} ft. at {y_tilt} deg."
+        self.offsetx =100
         self.offsety = 150
         self.xrange = z_distance*2
         self.yrange = x_distance
-        self.plot_width = self.xrange*2+100
-        self.plot_height = self.yrange*2+200
-        self.projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg)
-        #projection_list,max_lux = self.generatePlanePlot(0,"y",90, 2,z_distance,x_distance, 1)
+        self.plot_width = self.xrange*2+200
+        self.plot_height = self.yrange*2+250
+        #self.projection_list,max_lux = self.generateGroundPlot(height, y_tilt, x_tilt, increments, x_distance, z_distance, starting_x_deg, starting_y_deg, ending_x_deg, ending_y_deg)
+        self.projection_list,max_lux = self.generatePlanePlot(0,"y",90, 2,z_distance,x_distance, 1)
+        
+        
         
         #wall plot
-        # wall_distance = 500
+        # wall_distance = 100
         # x_tilt = 0
         # y_tilt = 0
-        # x_distance = 300 #must be in increments of 25
-        # y_distance = 300 #must be in increments of 25
+        # x_distance = 200 #must be in increments of 25
+        # y_distance = 200 #must be in increments of 25
         # increments = 1
         # starting_x_deg=-90
         # starting_y_deg=90
@@ -129,7 +145,7 @@ class LuxPlotter(QtWidgets.QWidget):
         # self.plot_width = self.xrange*4+100
         # self.plot_height = self.yrange*4+200
         # plot_title = f"Wall Plot at {wall_distance} from the source with x tilt: {x_tilt}, y tilt: {y_tilt}"
-        #self.projection_list,max_lux = self.generateWallPlot(wall_distance,y_tilt,x_tilt,increments,x_distance,y_distance,starting_x_deg,starting_y_deg,ending_x_deg,ending_y_deg,x_degrees_increment,y_degrees_increment)
+        # self.projection_list,max_lux = self.generateWallPlot(wall_distance,y_tilt,x_tilt,increments,x_distance,y_distance,starting_x_deg,starting_y_deg,ending_x_deg,ending_y_deg,x_degrees_increment,y_degrees_increment)
         
         
         
@@ -140,8 +156,8 @@ class LuxPlotter(QtWidgets.QWidget):
         self.label.setPixmap(canvas)
         
         #ratio'd step map
-        # self.step_map = [.1,max_lux*.1**2,max_lux*.2**2,max_lux*.3**2,max_lux*.4**2,max_lux*.5**2,max_lux*.6**2,max_lux*.7**2,max_lux*.8**2,max_lux*.9**2,max_lux]
-        
+        #self.step_map = [1,max_lux*.1**2,max_lux*.2**2,max_lux*.3**2,max_lux*.4**2,max_lux*.5**2,max_lux*.6**2,max_lux*.7**2,max_lux*.8**2,max_lux*.9**2,max_lux]
+        # self.step_map = [1,max_lux*.1**2,max_lux*.2**2,max_lux*.4**2,max_lux*.6**2,max_lux]
         #normalized step map
         self.step_map = [1,2,4,8,16,32,64,128,256,512,1024]
         #print(self.step_map)
@@ -186,7 +202,7 @@ class LuxPlotter(QtWidgets.QWidget):
         self.setWindowTitle('Lux Plotter')
         self.show()
         
-    def getInterpolatedCandela1D(self,theta,starting_degree,degrees_increment,axis):
+    def getInterpolatedCandela1D(self,data_set,theta,starting_degree,degrees_increment,axis):
         if starting_degree<0:
             degrees_increment = -1*degrees_increment
         element_1 = math.ceil((starting_degree-theta)/degrees_increment)
@@ -198,18 +214,18 @@ class LuxPlotter(QtWidgets.QWidget):
             
         theta_diff = theta- (starting_degree-element_1*degrees_increment) 
         if axis  =="y":
-            origin = int((len(y_axis_list[0])-1)/2)
-            c_diff = float(y_axis_list[element_1][origin])-float(y_axis_list[element_2][origin])
+            origin = int((len(data_set[0])-1)/2)
+            c_diff = float(data_set[element_1][origin])-float(data_set[element_2][origin])
             c_increment = c_diff/abs(degrees_increment)
-            candela = float(y_axis_list[element_1][origin]) - (c_increment * theta_diff)
+            candela = float(data_set[element_1][origin]) - (c_increment * theta_diff)
             #print(theta,starting_degree-element_1*degrees_increment,"c1",y_axis_list[element_1][origin],starting_degree-element_2*degrees_increment,"c2",y_axis_list[element_2][origin],"theta diff",theta_diff,"c_diff",c_diff,"c_incre",c_increment,"c",candela)
 
         else:
-            origin = int((len(y_axis_list)-1)/2)
+            origin = int((len(data_set)-1)/2)
             #print(origin,element_1,element_2)
-            c_diff = float(y_axis_list[origin][element_1])-float(y_axis_list[origin][element_2])
+            c_diff = float(data_set[origin][element_1])-float(data_set[origin][element_2])
             c_increment = c_diff/abs(degrees_increment)
-            candela = float(y_axis_list[origin][element_1]) + (c_increment * theta_diff)
+            candela = float(data_set[origin][element_1]) + (c_increment * theta_diff)
             #print(theta,starting_degree-element_1*degrees_increment,"c1",y_axis_list[origin][element_1],starting_degree-element_2*degrees_increment,"c2",y_axis_list[origin][element_2],"theta diff",theta_diff,"c_diff",c_diff,"c_incre",c_increment,"c",candela)
         return candela
     
@@ -276,15 +292,15 @@ class LuxPlotter(QtWidgets.QWidget):
             for x in range (x_range):
                 x = -x_distance+x*increments
                 theta = math.degrees(math.atan(x/y))
-                candela = self.getInterpolatedCandela1D(theta,starting_degree,degrees_increment,plane_axis)
+                candela = self.getInterpolatedCandela1D(data_set_list[0].data_set,theta,starting_degree,2,plane_axis)
                 d = math.sqrt((x**2)+(y**2))
                 lux = (float(candela)*candela_to_lux_modifier)/(d**2)
-                if x == 0 and y%25==0:
-                    print(candela,d,lux)
+                # if x == 0 and y%25==0:
+                #     print(candela,d,lux)
                 if lux > max_lux:
                     max_lux = lux 
                 projection_list.append((x,y,lux))
-        print(max_lux)
+        print("max_lux:",max_lux)
         return projection_list,max_lux
     
     def generateGroundPlot(self,height,y_tilt,x_tilt,increments,x_distance,z_distance,starting_x_deg,starting_y_deg,ending_x_deg,ending_y_deg):
@@ -307,7 +323,7 @@ class LuxPlotter(QtWidgets.QWidget):
                 d = math.sqrt((height**2)+(x**2)+(z**2))
                 lux_1 = (float(candela_1)*candela_to_lux_modifier)/(d**2)
                 lux_2 = (float(candela_2)*candela_to_lux_modifier)/(d**2)
-                lux = lux_1 * (1-0.04*10) + lux_2 * (1.45*1)
+                lux = lux_1 * (0) + lux_2 * (1)
                 #lux = lux_2 * 1
                 #adjusting for light count
                 lux = lux * self.light_count
@@ -339,7 +355,7 @@ class LuxPlotter(QtWidgets.QWidget):
                 theta_y = math.degrees(math.atan(y/wall_distance))-y_tilt
                 
                 # if theta_y<= starting_y_deg and theta_y >= ending_y_deg and theta_x >= starting_x_deg and theta_x <= ending_x_deg:
-                candela = self.getInterpolatedCandela2D(data_set_list[1],theta_x,starting_x_deg,x_degrees_increment,theta_y, starting_y_deg, y_degrees_increment)
+                candela = self.getInterpolatedCandela2D(data_set_list[0].data_set,theta_x,starting_x_deg,data_set_list[0].x_increment,theta_y, starting_y_deg, data_set_list[0].y_increment)
                 # candela = y_axis_list[y_th_1][x_th_1]
                 d = math.sqrt((wall_distance**2)+(x**2)+(y**2))
                 lux = (float(candela)*candela_to_lux_modifier)/(d**2)
@@ -357,7 +373,7 @@ class LuxPlotter(QtWidgets.QWidget):
                 #if x ==0 and y%10==0:
                 #    print("calculated theta:",theta_x,theta_y,"list theta",starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment,"x,y",x,y,"interpolated candela",candela,c_x_1, c_x_2,"distance",d,"lux",lux,"original candelas",starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment, y_axis_list[y_th_1][x_th_1],starting_x_deg+x_th_2*x_degrees_increment,starting_y_deg-y_th_1*y_degrees_increment,y_axis_list[y_th_1][x_th_2],starting_x_deg+x_th_1*x_degrees_increment,starting_y_deg-y_th_2*y_degrees_increment,y_axis_list[y_th_2][x_th_1],starting_x_deg+x_th_2*x_degrees_increment,starting_y_deg-y_th_2*y_degrees_increment,y_axis_list[y_th_2][x_th_2])
                 #print("calculated theta:",theta_x,theta_y,"list theta x",-90+x_th_1*2,-90+x_th_2*2,"list theta y",-90+y_th_1*2,-90+y_th_2*2,"z,x",z,x,"candela",candela,d,lux)
-                projection_list.append((x,y,lux))
+                projection_list.append((y,x,lux))
         return projection_list,max_lux
         
         
@@ -507,8 +523,26 @@ class LuxPlotter(QtWidgets.QWidget):
         canvas = self.label.pixmap()
         painter = QtGui.QPainter(canvas)
         #painter.scale(self.scale, self.scale)
-        self.drawBySolid(painter,"ground",projection_list,increments)
+        
+        font = painter.font()
+        font.setBold(True)
+        font.setPointSize(self.font_size)
+        painter.setFont(font)
+        
+        font_metric = QtGui.QFontMetrics(painter.font())
+        
+        #draw black background for plot
+        pen = QtGui.QPen(QtCore.Qt.black,1)
+        painter.setPen(pen)
+        painter.setBrush(QtCore.Qt.black)
+        painter.drawRect(self.offsetx,self.plot_height-self.offsety-self.yrange*2,self.plot_width-self.offsetx*2,self.yrange*2)
+        
+        # if self.rendermethod>1:
+        #     self.step_map = [1,20,40,80,120,160,180,200,999999]
+        
+        # self.drawBySolid(painter,"ground",projection_list,increments)
         #self.drawByGradient(painter,"ground",projection_list,increments,max_lux)
+
         pen = QtGui.QPen(QtCore.Qt.white,2)
         painter.setPen(pen)
         #+y
@@ -528,36 +562,71 @@ class LuxPlotter(QtWidgets.QWidget):
         painter.setPen(pen)
         #x axis
         for i in range(self.xrange*2+1):
-            if i%(50)==0:
+            if i%(100)==0:
                 #painter.drawLine(self.offsetx+i,self.plot_height-self.offsety,self.offsetx+i,self.plot_height-self.offsety+10)
-                painter.drawText(QtCore.QPointF(self.offsetx+(i)-15, self.plot_height-self.offsety+30),str(-self.xrange/2+i/2))
-        painter.drawText(QtCore.QPointF(self.plot_width/2-40, self.plot_height-100),"Distance (ft.)")
-        #yaxis
+                s = str(int(-self.xrange/2+i/2))
+                font_offset = font_metric.boundingRect(s).width()/2
+                painter.drawText(QtCore.QPointF(self.offsetx+(i)-font_offset, self.plot_height-self.offsety+30),s)
+                s = str(int((-self.xrange/2+i/2)/3.281))
+                font_offset = font_metric.boundingRect(s).width()/2
+                painter.drawText(QtCore.QPointF(self.offsetx+(i)-font_offset, self.offsety-65),s)
+        s = "Distance (ft)"
+        font_offset = font_metric.boundingRect(s).width()/2
+        painter.drawText(QtCore.QPointF(self.plot_width/2-font_offset, self.plot_height-100),s)
+        s = "Distance (m)"
+        font_offset = font_metric.boundingRect(s).width()/2
+        painter.drawText(QtCore.QPointF(self.plot_width/2-font_offset, self.offsety-90),s)
+        #yaxis (ft)
         for i in range(self.yrange*2+1):
-            if i%(50)==0:
+            if i%(100)==0:
                 #painter.drawLine(self.offsetx-5,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
-                painter.drawText(QtCore.QPointF(self.offsetx-40, self.plot_height-self.offsety-i+5),str(i/2))
-        painter.drawText(QtCore.QPointF(5, 25),"Distance (ft.)")
+                s = str(int(i/2))
+                #font_offset = font_metric.boundingRect(s).width()/2
+                rect = QtCore.QRect(self.offsetx-105, self.plot_height-self.offsety-i-font_metric.boundingRect(s).height()/2,100,font_metric.boundingRect(s).height())
+                painter.drawText(rect,QtCore.Qt.AlignRight,s)
+                #painter.drawText(QtCore.QPointF(self.offsetx-40, self.plot_height-self.offsety-i+5),str(int(i/2)))
+
+        painter.translate(self.plot_width/2,self.plot_height/2)
+        painter.rotate(-90)
+        s = "Distance (ft)"
+        font_offset = font_metric.boundingRect(s).width()/2
+        painter.drawText(QtCore.QPointF(-font_offset, -self.plot_width/2+self.offsetx/2-5),s)
+        painter.rotate(90)
+        painter.translate(-self.plot_width/2,-self.plot_height/2)
+        
+        #yaxis (meter)
+        for i in range(self.yrange*2+1):
+            if i%(100)==0:
+                #painter.drawLine(self.offsetx-5,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
+                painter.drawText(QtCore.QPointF(self.plot_width-self.offsetx+10, self.plot_height-self.offsety-i+5),str(math.ceil((i/2)/3.281)))
+        
+        painter.translate(self.plot_width/2,self.plot_height/2)
+        painter.rotate(90)
+        s = "Distance (m)"
+        font_offset = font_metric.boundingRect(s).width()/2
+        painter.drawText(QtCore.QPointF(-font_offset, -self.plot_width/2+self.offsetx/2-5),s)
+        painter.rotate(-90)
+        painter.translate(-self.plot_width/2,-self.plot_height/2)
         
         #draw grid
         for i in range(self.xrange*2+1):
             if i%(50)==0:
-                painter.drawLine(self.offsetx+i,self.plot_height-self.offsety,self.offsetx+i,50)
+                painter.drawLine(self.offsetx+i,self.plot_height-self.offsety,self.offsetx+i,100)
         #yaxis
         for i in range(self.yrange*2+1):
             if i%(50)==0:
                 painter.drawLine(self.plot_width-self.offsetx,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
                 
         #football field overlay
-        pen = QtGui.QPen(QtCore.Qt.green,5)
-        painter.setPen(pen)
-        #length wise field
-        for i in range(self.xrange*2+1):
-            if (i-self.xrange-160)%320==0:
-                painter.drawLine(self.offsetx+i,self.plot_height-self.offsety,self.offsetx+i,50)
-        for i in range(self.yrange*2+1):
-            if i%(720)==0:
-                painter.drawLine(self.plot_width-self.offsetx,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
+        # pen = QtGui.QPen(QtCore.Qt.green,5)
+        # painter.setPen(pen)
+        # #length wise field
+        # for i in range(self.xrange*2+1):
+        #     if (i-self.xrange-160)%320==0:
+        #         painter.drawLine(self.offsetx+i,self.plot_height-self.offsety,self.offsetx+i,50)
+        # for i in range(self.yrange*2+1):
+        #     if i%(720)==0:
+        #         painter.drawLine(self.plot_width-self.offsetx,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
         #width wise field
         # for i in range(self.xrange*2+1):
         #     if (i-self.xrange-360)%720==0:
@@ -566,26 +635,55 @@ class LuxPlotter(QtWidgets.QWidget):
         #     if i%(320)==0:
         #         painter.drawLine(self.plot_width-self.offsetx,self.plot_height-self.offsety-i,self.offsetx,self.plot_height-self.offsety-i)
 
+        if self.rendermethod>1:
+            self.step_map = [5,20,40,80,120,160,180,200,999999]
+        
+        self.drawBySolid(painter,"ground",projection_list,increments)
+        #self.drawByGradient(painter,"ground",projection_list,increments,max_lux)
+
+
         #draw title
-        font_metric = QtGui.QFontMetrics(painter.font())
-        font_offset = font_metric.boundingRect(plot_title).width()/2
+        font.setPointSize(self.font_size)
+        painter.setFont(font)
         pen = QtGui.QPen(QtCore.Qt.white,2)
         painter.setPen(pen)
-        painter.drawText(QtCore.QPointF(self.plot_width/2-font_offset, 20),plot_title)
+        font_metric = QtGui.QFontMetrics(painter.font())
+        font_offset = font_metric.boundingRect(plot_title).width()/2
+        #painter.drawText(QtCore.QPointF(self.plot_width/2-font_offset, 25),plot_title)
+        font.setPointSize(self.font_size)
+        painter.setFont(font)
+        font_metric = QtGui.QFontMetrics(painter.font())
+        
+        
         
         #draw legend
-        s = "1 Lux = Intensity of the light of a full moon"
+        # s = "1 Lux = Typical light needed to read a newspaper"
+        # font_offset = font_metric.boundingRect(s).width()/2
+        # painter.drawText(QtCore.QPointF(self.plot_width/2-font_offset, self.plot_height-5),s)
+        
+        s = "Lux Legend"
         font_offset = font_metric.boundingRect(s).width()/2
-        painter.drawText(QtCore.QPointF(self.plot_width/2-font_offset, self.plot_height-25),s)
-        legend_distance = self.plot_width - self.offsetx*2
-        legend_section = legend_distance/10
+        painter.drawText(QtCore.QPointF(self.plot_width/2-font_offset, self.plot_height-60),s)
+        
+        legend_distance = self.plot_width - self.offsetx
+        section_count = len(self.color_map)
+        legend_section = legend_distance/section_count
+            
         for i in range(len(self.color_map)):
             painter.setPen(self.color_map[i])
             painter.setBrush(self.color_map[i])
-            painter.drawRect(self.plot_width/2 - legend_distance/2 +(i)*legend_section, self.plot_height-90,legend_section,20)
+            painter.drawRect(self.plot_width/2 - legend_distance/2 +(i)*legend_section, self.plot_height-50,legend_section,20)
             painter.setPen(QtGui.Qt.white)
-            painter.drawText(QtCore.QPointF(self.plot_width/2 -legend_distance/2 +(i)*legend_section-10,self.plot_height-50), f"{round(self.step_map[i],2)}")
-        painter.drawText(QtCore.QPointF(self.plot_width/2 -legend_distance/2 +(10)*legend_section-10,self.plot_height-50), f"{round(self.step_map[10],2)}")
+            s = f"{round(self.step_map[i],2)}"
+            font_offset = font_metric.boundingRect(s).width()/2
+            painter.drawText(QtCore.QPointF(self.plot_width/2 -legend_distance/2 +(i)*legend_section-font_offset,self.plot_height-10),s )
+        if self.rendermethod>1:
+            s = f"∞"
+        else:
+            s = f"{round(self.step_map[section_count],2)}"
+        font_offset = font_metric.boundingRect(s).width()/2
+        painter.drawText(QtCore.QPointF(self.plot_width/2 -legend_distance/2 +(section_count)*legend_section-font_offset,self.plot_height-10), s)
+        
             
         painter.end()
         self.label.setPixmap(canvas)
@@ -598,28 +696,32 @@ class LuxPlotter(QtWidgets.QWidget):
             y = lux_item[1]
             #lux = lux_item[2]
             if y < self.yrange and y > -self.yrange and x<self.xrange and x>-self.xrange:
-                if lux_item[2]>self.step_map[0] and lux_item[2] <= self.step_map[1]:
-                    pen = QtGui.QPen(self.color_map[0],pixel_size)
-                elif lux_item[2] >self.step_map[1] and lux_item[2] <= self.step_map[2]:
-                    pen = QtGui.QPen(self.color_map[1],pixel_size)
-                elif lux_item[2] >self.step_map[2] and lux_item[2] <= self.step_map[3]:
-                    pen = QtGui.QPen(self.color_map[2],pixel_size)
-                elif lux_item[2] >self.step_map[3] and lux_item[2] <= self.step_map[4]:
-                    pen = QtGui.QPen(self.color_map[3],pixel_size)
-                elif lux_item[2] >self.step_map[4] and lux_item[2] <= self.step_map[5]:
-                    pen = QtGui.QPen(self.color_map[4],pixel_size)
-                elif lux_item[2] >self.step_map[5] and lux_item[2] <= self.step_map[6]:
-                    pen = QtGui.QPen(self.color_map[5],pixel_size)
-                elif lux_item[2] >self.step_map[6] and lux_item[2] <= self.step_map[7]:
-                    pen = QtGui.QPen(self.color_map[6],pixel_size)
-                elif lux_item[2] >self.step_map[7] and lux_item[2] <= self.step_map[8]:
-                    pen = QtGui.QPen(self.color_map[7],pixel_size)
-                elif lux_item[2] >self.step_map[8] and lux_item[2] <= self.step_map[9]:
-                    pen = QtGui.QPen(self.color_map[8],pixel_size)
-                elif lux_item[2] >self.step_map[9] and lux_item[2] <= self.step_map[10]:
-                    pen = QtGui.QPen(self.color_map[9],pixel_size)
-                else:
-                    pen = QtGui.QPen(QtCore.Qt.white,pixel_size)
+                for i in range(len(self.step_map)-1):
+                    if lux_item[2]>self.step_map[i] and lux_item[2] <= self.step_map[i+1]:
+                        pen = QtGui.QPen(self.color_map[i],pixel_size)
+                        break
+                # if lux_item[2]>self.step_map[0] and lux_item[2] <= self.step_map[1]:
+                #     pen = QtGui.QPen(self.color_map[0],pixel_size)
+                # elif lux_item[2] >self.step_map[1] and lux_item[2] <= self.step_map[2]:
+                #     pen = QtGui.QPen(self.color_map[1],pixel_size)
+                # elif lux_item[2] >self.step_map[2] and lux_item[2] <= self.step_map[3]:
+                #     pen = QtGui.QPen(self.color_map[2],pixel_size)
+                # elif lux_item[2] >self.step_map[3] and lux_item[2] <= self.step_map[4]:
+                #     pen = QtGui.QPen(self.color_map[3],pixel_size)
+                # elif lux_item[2] >self.step_map[4] and lux_item[2] <= self.step_map[5]:
+                #     pen = QtGui.QPen(self.color_map[4],pixel_size)
+                # elif lux_item[2] >self.step_map[5] and lux_item[2] <= self.step_map[6]:
+                #     pen = QtGui.QPen(self.color_map[5],pixel_size)
+                # elif lux_item[2] >self.step_map[6] and lux_item[2] <= self.step_map[7]:
+                #     pen = QtGui.QPen(self.color_map[6],pixel_size)
+                # elif lux_item[2] >self.step_map[7] and lux_item[2] <= self.step_map[8]:
+                #     pen = QtGui.QPen(self.color_map[7],pixel_size)
+                # elif lux_item[2] >self.step_map[8] and lux_item[2] <= self.step_map[9]:
+                #     pen = QtGui.QPen(self.color_map[8],pixel_size)
+                # elif lux_item[2] >self.step_map[9] and lux_item[2] <= self.step_map[10]:
+                #     pen = QtGui.QPen(self.color_map[9],pixel_size)
+                # else:
+                #     pen = QtGui.QPen(QtCore.Qt.white,pixel_size)
                 if lux_item[2]>=self.step_map[0]:
                     painter.setPen(pen)
                     if plot_type =="wall":
@@ -635,17 +737,17 @@ class LuxPlotter(QtWidgets.QWidget):
             y = lux_item[1]
             #lux = lux_item[2]
             if y < self.yrange and y > -self.yrange and x<self.xrange and x>-self.xrange:
-                rgb_value = lux_item[2] * (1024/max_lux)
-                if rgb_value<=256:
-                    pen = QtGui.QPen(QtGui.QColor(0,rgb_value,255),pixel_size)
-                elif rgb_value>256 and rgb_value<=512:
-                    pen = QtGui.QPen(QtGui.QColor(0,255,512-rgb_value),pixel_size)
-                elif rgb_value>256 and rgb_value<=512:
-                    pen = QtGui.QPen(QtGui.QColor(0,255,512-rgb_value),pixel_size)
-                elif rgb_value>512 and rgb_value<=756:
-                    pen = QtGui.QPen(QtGui.QColor(rgb_value-512,255,0),pixel_size)
+                rgb_value = lux_item[2] * (1275/max_lux)
+                if rgb_value<=255:
+                    pen = QtGui.QPen(QtGui.QColor(0,0,rgb_value),pixel_size)
+                elif rgb_value>255 and rgb_value<=510:
+                    pen = QtGui.QPen(QtGui.QColor(0,rgb_value-255,255),pixel_size)
+                elif rgb_value>510 and rgb_value<=765:
+                    pen = QtGui.QPen(QtGui.QColor(0,255,765-rgb_value),pixel_size)
+                elif rgb_value>765 and rgb_value<=1020:
+                    pen = QtGui.QPen(QtGui.QColor(rgb_value-765,255,0),pixel_size)
                 else:
-                    pen = QtGui.QPen(QtGui.QColor(255,rgb_value-756,0),pixel_size)
+                    pen = QtGui.QPen(QtGui.QColor(255,1275-rgb_value,0),pixel_size)
                 if lux_item[2]>=self.step_map[0]:
                     painter.setPen(pen)
                     if plot_type =="wall":
